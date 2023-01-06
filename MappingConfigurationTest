@@ -1,0 +1,15 @@
+@ExtendWith(MockitoExtension.class)
+public class MappingConfigurationTest {
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @InjectMocks
+    private MappingConfiguration configuration;
+
+    @Test
+    public void testObjectMapper() {
+        assertNotNull(configuration.objectMapper());
+        assertSame(objectMapper, configuration.objectMapper());
+    }
+}
