@@ -1,0 +1,26 @@
+@ExtendWith(SpringExtension.class)
+public class McyExceptionTest {
+
+    @Test
+    public void testConstructorWithMessage() {
+        String message = "This is a test message";
+        McyException exception = new McyException(message);
+        assertEquals(message, exception.getMessage());
+    }
+
+    @Test
+    public void testConstructorWithMessageAndCause() {
+        String message = "This is a test message";
+        Throwable cause = new Exception("This is a test cause");
+        McyException exception = new McyException(message, cause);
+        assertEquals(message, exception.getMessage());
+        assertEquals(cause, exception.getCause());
+    }
+
+    @Test
+    public void testConstructorWithCause() {
+        Throwable cause = new Exception("This is a test cause");
+        McyException exception = new McyException(cause);
+        assertEquals(cause, exception.getCause());
+    }
+}
