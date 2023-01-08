@@ -1,0 +1,38 @@
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+public class MessagingErrorTest {
+
+    @Mock
+    private MessagingError messagingErrorMock;
+
+    @Test
+    public void testGettersAndSetters() {
+        when(messagingErrorMock.getMessage()).thenReturn("test message");
+        when(messagingErrorMock.getErrorMessage()).thenReturn("test error message");
+        when(messagingErrorMock.getErrorCode()).thenReturn("test error code");
+        when(messagingErrorMock.getMessageClassName()).thenReturn("test class name");
+
+        assertEquals("test message", messagingErrorMock.getMessage());
+        assertEquals("test error message", messagingErrorMock.getErrorMessage());
+        assertEquals("test error code", messagingErrorMock.getErrorCode());
+        assertEquals("test class name", messagingErrorMock.getMessageClassName());
+
+        MessagingError messagingError = new MessagingError();
+        messagingError.setMessage("test message 2");
+        messagingError.setErrorMessage("test error message 2");
+        messagingError.setErrorCode("test error code 2");
+        messagingError.setMessageClassName("test class name 2");
+
+        assertEquals("test message 2", messagingError.getMessage());
+        assertEquals("test error message 2", messagingError.getErrorMessage());
+        assertEquals("test error code 2", messagingError.getErrorCode());
+        assertEquals("test class name 2", messagingError.getMessageClassName());
+    }
+}
