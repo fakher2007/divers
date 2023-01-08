@@ -1,0 +1,54 @@
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.core.MessageListener;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+
+@ExtendWith(MockitoExtension.class)
+public class MessagingConfigTest {
+
+    @Mock
+    private ConnectionFactory connectionFactoryMock;
+
+    @Mock
+    private MessageListenerAdapter listenerAdapterMock;
+
+    @Mock
+    private Consumer consumerMock;
+
+    @InjectMocks
+    private MessagingConfig messagingConfig;
+
+    @Test
+    public void testContainer() {
+        when(consumerMock.getQueue()).thenReturn("test queue");
+        messagingConfig.setConsumers(Arrays.asList(consumerMock));
+
+        SimpleMessageListenerContainer container = messagingConfig.container(connectionFactoryMock, listenerAdapterMock);
+        assertNotNull(container);
+        assertEquals(connectionFactoryMock, container.getConnectionFactory());
+        assertEquals(new String[] {"test queue"}, container.getQueueNames());
+        assertEquals(listenerAdapterMock, container.getMessageListener());
+    }
+
+    @Test
+    public void testListenerAdapter() {
+        Receiver receiverMock = mock(Receiver.class);
+
+        MessageListenerAdapter listenerAdapter = messagingConfig.listenerAdapter(receiverMock);
+        assertNotNull(listenerAdapter);
+        assertEquals(receiverMock, listenerAdapter.getDelegate());
+        assertEquals("receiveMessage", listenerAdapter.getDefaultListenerMethod());
+        assertEquals(null, listenerAdapter.getMessageConverter());
+    }
+}
