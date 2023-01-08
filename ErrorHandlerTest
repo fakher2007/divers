@@ -1,0 +1,49 @@
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+@ExtendWith(SpringExtension.class)
+public class ErrorHandlerTest {
+    @Mock
+    private Sender sender;
+
+    @Mock
+    private ObjectMapper mapper;
+
+    @InjectMocks
+    private ErrorHandler errorHandler;
+
+    @Test
+    public void testHandleError() throws Exception {
+        // create a mock MessagingError object
+        MessagingError mockError = mock(MessagingError.class);
+
+        // set up the mock consumers list
+        List<Consumer> consumers = Arrays.asList(
+            new Consumer("bean1", "dlq1"),
+            new Consumer("bean2", "dlq2")
+        );
+        errorHandler.setConsumers(consumers);
+
+        // set up the mock mapper to return a JSON string when writeValueAsString is called
+        when(mapper.writeValueAsString(mockError)).thenReturn("{}");
+
+        // call the handleError method
+        errorHandler.handleError(mockError, "bean2");
+
+        // verify that the sendMessage method was called with the correct DLQ
+        verify(sender).sendMessage(any(), eq("dlq2"));
+    }
+}
