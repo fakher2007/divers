@@ -1,0 +1,76 @@
+import com.healthmarketscience.sqlbuilder.BinaryCondition;
+import com.healthmarketscience.sqlbuilder.SelectQuery;
+import com.healthmarketscience.sqlbuilder.dbspec.basic.DbColumn;
+import com.healthmarketscience.sqlbuilder.dbspec.basic.DbJoin;
+import com.healthmarketscience.sqlbuilder.dbspec.basic.DbTable;
+
+...
+
+// Define the tables and columns involved in the query
+DbTable eventGuests = new DbTable("public.security_event_guests", "g");
+DbTable events = new DbTable("public.security_event", "e");
+DbColumn eventProcess = events.addColumn("process_id");
+DbColumn guestUserId = eventGuests.addColumn("user_id");
+DbColumn eventId = eventGuests.addColumn("event_id");
+
+// Construct the query
+SelectQuery query = new SelectQuery()
+  .addColumns(eventProcess)
+  .addJoin(new DbJoin(DbJoin.Type.INNER, events, eventProcess, eventGuests, eventId))
+  .addCondition(BinaryCondition.equalTo(guestUserId, userId))
+  .setIsDistinct(true);
+
+// Execute the query using JdbcTemplate
+return jdbcTemplate.queryForList(query.toString(), Integer.class);
+
+
+------------------------
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+@ExtendWith(MockitoExtension.class)
+class ExampleTest {
+    
+    @Mock
+    JdbcTemplate jdbcTemplate;
+    
+    @InjectMocks
+    Example example;
+    
+    @Test
+    void testFindGuestEventProcesses() {
+        // Arrange
+        List<Integer> expected = new ArrayList<>();
+        expected.add(1);
+        expected.add(2);
+        expected.add(3);
+        
+        Map<String, Object> params = new HashMap<>();
+        params.put("user", 123);
+        
+        when(jdbcTemplate.queryForList(any(String.class), eq(params), eq(Integer.class))).thenReturn(expected);
+        
+        // Act
+        List<Integer> actual = example.findGuestEventProcesses(123);
+        
+        // Assert
+        assertEquals(expected, actual);
+    }
+
+}
+
