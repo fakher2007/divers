@@ -1,0 +1,128 @@
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
+class WorkflowServiceImplTest {
+
+    @Mock
+    private SecurityEventRepository securityEventRepository;
+
+    @Mock
+    private IdentityProvider identityProvider;
+
+    @Mock
+    private PerimeterService perimeterService;
+
+    @Mock
+    private WorkflowStateRepository stateRepository;
+
+    @InjectMocks
+    private WorkflowServiceImpl workflowService;
+
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void testGetEventDetails_WhenEventNotFound_ThenReturnNotFoundResponse() {
+        // Arrange
+        String eventId = "123";
+        when(securityEventRepository.findById(eventId)).thenReturn(Optional.empty());
+
+        // Act
+        Response<EventDetail> response = workflowService.getEventDetails(eventId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(Response.notFound(Error.field("id", "NOT FOUND")), response);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "null"})
+    void testGetEventDetails_WhenInvalidStateId_ThenReturnInvalidResponse(String stateId) {
+        // Arrange
+        String eventId = "123";
+        SecurityEvent securityEvent = new SecurityEvent();
+        securityEvent.setWorkflowStateId(stateId);
+        when(securityEventRepository.findById(eventId)).thenReturn(Optional.of(securityEvent));
+
+        // Act
+        Response<EventDetail> response = workflowService.getEventDetails(eventId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(Response.invalid(Error.error("INVALID STATE")), response);
+    }
+
+    @Test
+    void testGetEventDetails_WhenWorkflowStateNotFound_ThenReturnInvalidResponse() {
+        // Arrange
+        String eventId = "123";
+        String stateId = "456";
+        SecurityEvent securityEvent = new SecurityEvent();
+        securityEvent.setWorkflowStateId(stateId);
+        when(securityEventRepository.findById(eventId)).thenReturn(Optional.of(securityEvent));
+        when(stateRepository.findById(stateId)).thenReturn(Optional.empty());
+
+        // Act
+        Response<EventDetail> response = workflowService.getEventDetails(eventId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(Response.invalid(Error.error("INVALID STATE")), response);
+    }
+
+    @Test
+    void testGetEventDetails_WhenInvalidActor_ThenReturnUnauthorizedResponse() {
+        // Arrange
+        String eventId = "123";
+        String stateId = "456";
+        SecurityEvent securityEvent = new SecurityEvent();
+        securityEvent.setWorkflowStateId(stateId);
+        when(securityEventRepository.findById(eventId)).thenReturn(Optional.of(securityEvent));
+        when(stateRepository.findById(stateId)).thenReturn(Optional.of(new WorkflowState()));
+        when(identityProvider.getCurrentUser()).thenReturn(123);
+        when(perimeterService.isGroupUser(anyInt(), anyInt())).thenReturn(false);
+
+        // Act
+        Response<EventDetail> response = workflowService.getEventDetails(eventId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(Response.unauthorized(Error.error("NOT_AUTHORIZED")), response);
+    }
+
+    @Test
+    void testGetEventDetails_WhenValidActor_ThenReturnEventState() {
+        // Arrange
+        String eventId = "123";
+        String stateId = "456";
+        SecurityEvent securityEvent =
+        SecurityEvent securityEvent = new SecurityEvent();
+        securityEvent.setWorkflowStateId(stateId);
+        when(securityEventRepository.findById(eventId)).thenReturn(Optional.of(securityEvent));
+        when(stateRepository.findById(stateId)).thenReturn(Optional.of(new WorkflowState()));
+        when(identityProvider.getCurrentUser()).thenReturn(123);
+        when(perimeterService.isGroupUser(anyInt(), anyInt())).thenReturn(true);
+
+        // Act
+        Response<EventDetail> response = workflowService.getEventDetails(eventId);
+
+        // Assert
+        assertNotNull(response);
+        // Add your assertions for the expected response
+    }
+}
