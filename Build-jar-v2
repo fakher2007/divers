@@ -1,0 +1,110 @@
+import os
+
+import subprocess
+
+def clone_repo(repo):
+
+    repo_url, branch_name = repo
+
+    subprocess.run(['git', 'clone', '-b', branch_name, repo_url])
+
+def build_jar(repo_name):
+
+    os.chdir(repo_name)
+
+    subprocess.run(['./mvnw', 'clean', 'package'])
+
+    os.chdir('..')
+
+def bootstrap_jar(repo):
+
+    repo_name, env_variables = repo
+
+    os.chdir(repo_name)
+
+    cmd = ['java', '-jar', 'target/myapp.jar']
+
+    for env_var, value in env_variables.items():
+
+        cmd.append('-D{}={}'.format(env_var, value))
+
+    subprocess.Popen(cmd)  # Open a new terminal window for JAR execution
+
+    os.chdir('..')
+
+# Define the repositories and their respective branch names
+
+repos = [
+
+    ('https://github.com/username/repo1.git', 'main'),
+
+    ('https://github.com/username/repo2.git', 'development'),
+
+    ('https://github.com/username/repo3.git', 'master'),
+
+    ('https://github.com/username/repo4.git', 'feature/branch')
+
+]
+
+# Define environment variables for each repository
+
+env_variables_list = [
+
+    {
+
+        'ENV_VAR1': 'value1',
+
+        'ENV_VAR2': 'value2'
+
+    },
+
+    {
+
+        'ENV_VAR3': 'value3',
+
+        'ENV_VAR4': 'value4'
+
+    },
+
+    {
+
+        'ENV_VAR5': 'value5',
+
+        'ENV_VAR6': 'value6'
+
+    },
+
+    {
+
+        'ENV_VAR7': 'value7',
+
+        'ENV_VAR8': 'value8'
+
+    }
+
+]
+
+# Clone the repositories
+
+for repo in repos:
+
+    clone_repo(repo)
+
+# Build the JAR files
+
+for repo in repos:
+
+    build_jar(repo[0].split('/')[-1].split('.')[0])
+
+# Bootstrap the JAR files with environment variables and display logs in separate terminals
+
+for repo, env_variables in zip(repos, env_variables_list):
+
+    print('Executing JAR for repository:', repo[0])
+
+    bootstrap_jar(repo, env_variables)
+
+    print('Completed JAR execution for repository:', repo[0])
+
+    print()
+
