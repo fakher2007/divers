@@ -1,15 +1,32 @@
 import shutil
 import os
+import glob
 
-def copy_file_with_new_name(file_path, new_file_name):
-    directory = os.path.dirname(file_path)
-    original_file_name = os.path.basename(file_path)
-    new_file_path = os.path.join(directory, new_file_name)
+def find_and_copy_jar_file(directory, new_file_name):
+    search_pattern = os.path.join(directory, "*.jar")
+    files = glob.glob(search_pattern)
 
-    shutil.copy2(file_path, new_file_path)
+    if len(files) == 1:
+        file_to_copy = files[0]
+        new_file_path = os.path.join(directory, new_file_name + ".jar")
+        shutil.copy2(file_to_copy, new_file_path)
+        print(f"File '{file_to_copy}' copied as '{new_file_path}'")
+    elif len(files) > 1:
+        print("Multiple .jar files found. Please ensure there is only one.")
+    else:
+        print("No .jar files found.")
 
 # Example usage
-file_to_copy = '/path/to/original/file.txt'
-new_file_name = 'new_file.txt'
+directory = '/path/to/directory'
+new_file_name = 'myapp'
 
-copy_file_with_new_name(file_to_copy, new_file_name)
+find_and_copy_jar_file(directory, new_file_name)
+
+    
+  
+  
+
+   
+
+
+
