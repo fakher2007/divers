@@ -1,0 +1,15 @@
+import shutil
+import os
+
+def copy_file_with_new_name(file_path, new_file_name):
+    directory = os.path.dirname(file_path)
+    original_file_name = os.path.basename(file_path)
+    new_file_path = os.path.join(directory, new_file_name)
+
+    shutil.copy2(file_path, new_file_path)
+
+# Example usage
+file_to_copy = '/path/to/original/file.txt'
+new_file_name = 'new_file.txt'
+
+copy_file_with_new_name(file_to_copy, new_file_name)
