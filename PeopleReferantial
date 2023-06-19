@@ -1,0 +1,46 @@
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CsvParser {
+    private static final Logger LOGGER = LogManager.getLogger(CsvParser.class);
+
+    private Mapper mapper;
+
+    public CsvParser(Mapper mapper) {
+        this.mapper = mapper;
+    }
+
+    public List<PeopleReferential> parseFile(Path path) {
+        try {
+            HeaderColumnNameMappingStrategy<PeopleReferentialCsv> strategy = new HeaderColumnNameMappingStrategy<>();
+            strategy.setType(PeopleReferentialCsv.class);
+
+            CsvToBean<PeopleReferentialCsv> csvToBean = new CsvToBeanBuilder<PeopleReferentialCsv>(Files.newBufferedReader(path))
+                    .withMappingStrategy(strategy)
+                    .build();
+
+            List<PeopleReferentialCsv> csvBeans = csvToBean.parse();
+
+            return csvBeans.stream()
+                    .map(mapper::map)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            LOGGER.error("Unable to read the file", e);
+        } catch (CsvRequiredFieldEmptyException e) {
+            LOGGER.error("Skipping bean due to empty required field", e);
+        }
+
+        return new ArrayList<>();
+    }
+}
