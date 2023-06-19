@@ -1,0 +1,63 @@
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CsvParser {
+    private static final Logger LOGGER = LogManager.getLogger(CsvParser.class);
+
+    private Mapper mapper;
+
+    public CsvParser(Mapper mapper) {
+        this.mapper = mapper;
+    }
+
+    public List<PeopleReferential> parseFile(Path path) {
+        List<PeopleReferential> result = new ArrayList<>();
+
+        try {
+            HeaderColumnNameMappingStrategy<PeopleReferentialCsv> strategy = new HeaderColumnNameMappingStrategy<>();
+            strategy.setType(PeopleReferentialCsv.class);
+
+            CsvToBean<PeopleReferentialCsv> csvToBean;
+            try (var reader = Files.newBufferedReader(path)) {
+                csvToBean = new CsvToBeanBuilder<PeopleReferentialCsv>(reader)
+                        .withMappingStrategy(strategy)
+                        .build();
+
+                List<PeopleReferentialCsv> csvBeans = csvToBean.parse();
+
+                for (PeopleReferentialCsv csvBean : csvBeans) {
+                    try {
+                        if (isCsvBeanValid(csvBean)) {
+                            PeopleReferential referential = mapper.map(csvBean);
+                            result.add(referential);
+                        } else {
+                            LOGGER.warn("Skipping bean due to empty required field: {}", csvBean);
+                        }
+                    } catch (CsvRequiredFieldEmptyException e) {
+                        LOGGER.error("Required field is empty in CSV bean: {}", csvBean);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Unable to parse the file", e);
+        }
+
+        return result;
+    }
+
+    private boolean isCsvBeanValid(PeopleReferentialCsv csvBean) {
+        // Add your custom validation logic here
+        return !csvBean.getName().isEmpty() && !csvBean.getEmail().isEmpty();
+    }
+}
