@@ -1,0 +1,21 @@
+private void updateData(List<PeopleReferential> peopleReferentialsList) {
+    if (!peopleReferentialsList.isEmpty()) {
+        log.info("Cleaning people_referential table");
+        peopleReferentialRepository.deleteAll();
+        log.info("Updating people_referential table");
+
+        int batchSize = 1000;
+        int listSize = peopleReferentialsList.size();
+
+        IntStream.range(0, listSize)
+                .boxed()
+                .collect(Collectors.groupingBy(index -> index / batchSize))
+                .values()
+                .forEach(indices -> {
+                    List<PeopleReferential> sublist = indices.stream()
+                            .map(peopleReferentialsList::get)
+                            .collect(Collectors.toList());
+                    peopleReferentialRepository.saveAll(sublist);
+                });
+    }
+}
