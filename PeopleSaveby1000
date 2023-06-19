@@ -19,3 +19,20 @@ private void updateData(List<PeopleReferential> peopleReferentialsList) {
                 });
     }
 }
+‐--------------
+
+private void updateData(List<PeopleReferential> peopleReferentialsList) {
+    if (!peopleReferentialsList.isEmpty()) {
+        log.info("Cleaning people_referential table");
+        peopleReferentialRepository.deleteAll();
+        log.info("Updating people_referential table");
+
+        int batchSize = 1000;
+        int listSize = peopleReferentialsList.size();
+
+        IntStream.range(0, (listSize + batchSize - 1) / batchSize)
+                .mapToObj(i -> peopleReferentialsList.subList(i * batchSize, Math.min((i + 1) * batchSize, listSize)))
+                .forEach(peopleReferentialRepository::saveAll);
+    }
+}
+
