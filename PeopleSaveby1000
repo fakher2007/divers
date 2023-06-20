@@ -35,4 +35,31 @@ private void updateData(List<PeopleReferential> peopleReferentialsList) {
                 .forEach(peopleReferentialRepository::saveAll);
     }
 }
+‐--------------
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+private void updateData(List<PeopleReferential> peopleReferentialsList) {
+    if (!peopleReferentialsList.isEmpty()) {
+        log.info("Cleaning people_referential table");
+        peopleReferentialRepository.deleteAll();
+        log.info("Updating people_referential table");
+
+        int batchSize = 1000;
+        int listSize = peopleReferentialsList.size();
+        int numThreads = Runtime.getRuntime().availableProcessors(); // Number of available processors
+
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+
+        for (int i = 0; i < listSize; i += batchSize) {
+            int endIndex = Math.min(i + batchSize, listSize);
+            List<PeopleReferential> sublist = peopleReferentialsList.subList(i, endIndex);
+
+            executor.execute(() -> peopleReferentialRepository.saveAll(sublist));
+        }
+
+        executor.shutdown();
+    }
+}
 
