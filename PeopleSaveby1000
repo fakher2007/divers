@@ -64,3 +64,17 @@ private void updateData(List<PeopleReferential> peopleReferentialsList) {
 }
 ----------------
 update pg_database set encoding = pg_char_to_encoding('UTF8') where datname = 'thedb'
+
+‐-----------------
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/db_name
+    username: your_username
+    password: your_password
+    driver-class-name: org.postgresql.Driver
+    validation-query: SELECT 1
+    test-on-borrow: true
+    test-while-idle: true
+    time-between-eviction-runs-millis: 5000
+    validation-interval: 30000
+
