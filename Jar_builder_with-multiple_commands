@@ -1,6 +1,7 @@
 import os
 import subprocess
 import argparse
+import shutil
 
 def download_repo(repo):
     repo_url, branch_name = repo
@@ -24,10 +25,15 @@ def run_application(repo, env_variables):
 
     os.chdir('..')
 
+def clean_repos():
+    repos = [dI for dI in os.listdir('.') if os.path.isdir(dI)]
+    for repo in repos:
+        shutil.rmtree(repo)
+
 def main():
     parser = argparse.ArgumentParser(description='Spring Boot JAR CLI')
 
-    parser.add_argument('actions', nargs='*', choices=['download', 'build', 'run'], default=['download', 'build', 'run'], help='Actions to perform: download, build, run')
+    parser.add_argument('actions', nargs='*', choices=['download', 'build', 'run', 'clean'], default=['download', 'build', 'run'], help='Actions to perform: download, build, run, clean')
     args = parser.parse_args()
 
     repos = [
@@ -68,9 +74,11 @@ def main():
         for repo, env_variables in zip(repos, env_variables_list):
             run_application(repo, env_variables)
 
+    if 'clean' in args.actions:
+        clean_repos()
+
 if __name__ == '__main__':
     main()
-
 
 
 
