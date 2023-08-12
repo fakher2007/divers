@@ -28,7 +28,12 @@ def run_application(repo, env_variables):
 def clean_repos():
     repos = [dI for dI in os.listdir('.') if os.path.isdir(dI)]
     for repo in repos:
-        shutil.rmtree(repo)
+        try:
+            shutil.rmtree(repo)
+            print(f'Repo "{repo}" is removed.')
+        except OSError as e:
+            print(f'Error removing repo "{repo}": {e}')
+
 
 def main():
     parser = argparse.ArgumentParser(description='Spring Boot JAR CLI')
