@@ -49,10 +49,10 @@ def main():
     parser = argparse.ArgumentParser(description='Spring Boot JAR and React Frontend CLI')
 
     parser.add_argument('actions', nargs='*', choices=['download', 'buildfront', 'runfront', 'buildback', 'runback', 'clean'], default=['download', 'buildfront', 'runfront', 'buildback', 'runback', 'clean'], help='Actions to perform: download, buildfront, runfront, buildback, runback, clean')
+    parser.add_argument('--action', help='Specify the action to perform (download, buildfront, runfront, buildback, runback, clean)')
     args = parser.parse_args()
 
-    parser.add_argument('--action', help='Specify the action to perform (download, buildfront, runfront, buildback, runback, clean)')
-
+    
     repos = [
         ('https://github.com/username/repo1.git', 'main'),
         ('https://github.com/username/repo2.git', 'development'),
