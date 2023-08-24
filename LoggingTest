@@ -1,0 +1,1 @@
+String regex = "\\[start\\]::\\s+\\w+\\.\\w+\\.\\w+\\.\\w+\\.\\w+\\(\\.\\.\\) with arguments :: args";
