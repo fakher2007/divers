@@ -1,0 +1,83 @@
+ import java.lang.instrument.Instrumentation;
+import java.util.List;
+import java.util.Map;
+
+public class StandardMessage {
+    private static Instrumentation instrumentation;
+    private String processId;
+    private List<Map<String, String>> data;
+
+    // Constructors, getters, setters for processId and data
+
+    public static void premain(String args, Instrumentation inst) {
+        instrumentation = inst;
+    }
+
+    public long getSize() {
+        if (instrumentation == null) {
+            throw new IllegalStateException("Instrumentation not initialized");
+        }
+        return instrumentation.getObjectSize(this);
+    }
+}
+-----------
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Main {
+    public static void main(String[] args) {
+        // Assume you have a large dataList
+        List<Map<String, String>> dataList = generateLargeData();
+
+        String processId = "123"; // Set your desired processId
+
+        List<StandardMessage> standardMessages = createStandardMessages(processId, dataList);
+
+        // Print sizes of each StandardMessage object
+        for (StandardMessage message : standardMessages) {
+            System.out.println("Size of the StandardMessage object: " + message.getSize() + " bytes");
+        }
+    }
+
+    private static List<Map<String, String>> generateLargeData() {
+        // Generate a large data list for testing
+        // This is just a sample, replace it with your actual data generation logic
+        List<Map<String, String>> dataList = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            Map<String, String> dataItem = new HashMap<>();
+            dataItem.put("key", "value" + i);
+            // Add more data as needed
+            dataList.add(dataItem);
+        }
+        return dataList;
+    }
+
+    private static List<StandardMessage> createStandardMessages(String processId, List<Map<String, String>> dataList) {
+        List<StandardMessage> standardMessages = new ArrayList<>();
+        StandardMessage currentMessage = new StandardMessage(processId, new ArrayList<>());
+
+        for (Map<String, String> dataItem : dataList) {
+            long dataSize = currentMessage.calculateDataSize(dataItem);
+
+            // Check if adding the current dataItem exceeds the size limit
+            if (currentMessage.getSize() + dataSize > 50 * 1024) {
+                // If yes, create a new StandardMessage
+                standardMessages.add(currentMessage);
+                currentMessage = new StandardMessage(processId, new ArrayList<>());
+            }
+
+            // Add the dataItem to the current StandardMessage
+            currentMessage.getData().add(dataItem);
+        }
+
+        // Add the last StandardMessage if it contains any data
+        if (!currentMessage.getData().isEmpty()) {
+            standardMessages.add(currentMessage);
+        }
+
+        return standardMessages;
+    }
+}
+
