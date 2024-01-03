@@ -1,0 +1,7 @@
+@echo off
+:loop
+set /a "randomX=%random% %% 1920"
+set /a "randomY=%random% %% 1080"
+nircmd.exe movecursor %randomX% %randomY%
+timeout /t 60 /nobreak >nul
+goto loop
