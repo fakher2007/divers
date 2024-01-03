@@ -5,3 +5,16 @@ set /a "randomY=%random% %% 1080"
 nircmd.exe movecursor %randomX% %randomY%
 timeout /t 60 /nobreak >nul
 goto loop
+‐--------------------
+#!/bin/bash
+
+while true; do
+    randomX=$((RANDOM % 1920))
+    randomY=$((RANDOM % 1080))
+    
+    # Move the mouse cursor to the random position
+    DISPLAY=:0 xdotool mousemove --sync $randomX $randomY
+    
+    sleep 60
+done
+
