@@ -17,4 +17,20 @@ while true; do
     
     sleep 60
 done
+‐‐------‐-------
 
+import pyautogui
+import time
+import random
+
+while True:
+    random_x = random.randint(0, 1920)
+    random_y = random.randint(0, 1080)
+
+    pyautogui.moveTo(random_x, random_y, duration=0.25)
+
+    time.sleep(60)
+
+install the lib: pip install pyautogui
+
+to run it : python mouse_movement.py
