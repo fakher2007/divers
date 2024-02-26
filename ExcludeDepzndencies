@@ -1,0 +1,19 @@
+<dependency>
+    <groupId>com.example</groupId>
+    <artifactId>common-library</artifactId>
+    <version>1.0.0</version>
+    <scope>compile</scope>
+    <exclusions>
+        <!-- Exclude all packages except the one you want -->
+        <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+        <!-- Include the specific package you want -->
+        <exclusion>
+            <groupId>com.example</groupId>
+            <artifactId>common-library</artifactId>
+            <artifactId>subpackage</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
