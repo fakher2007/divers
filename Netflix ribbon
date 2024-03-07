@@ -1,0 +1,70 @@
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+----------------
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Configuration
+public class RibbonConfig {
+
+    @Bean
+    @LoadBalanced
+    public WebClient.Builder loadBalancedWebClientBuilder() {
+        return WebClient.builder();
+    }
+}
+-----------
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+@Service
+public class MyService {
+
+    private final WebClient.Builder webClientBuilder1;
+    private final WebClient.Builder webClientBuilder2;
+
+    @Autowired
+    public MyService(WebClient.Builder webClientBuilder1, WebClient.Builder webClientBuilder2) {
+        this.webClientBuilder1 = webClientBuilder1;
+        this.webClientBuilder2 = webClientBuilder2;
+    }
+
+    public Mono<String> callBackendService1() {
+        return webClientBuilder1.build()
+                .get()
+                .uri("http://service1/path")
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+
+    public Mono<String> callBackendService2() {
+        return webClientBuilder2.build()
+                .get()
+                .uri("http://service2/path")
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+}
+----------
+application.yml 
+ribbon:
+  eureka:
+    enabled: false # If you're not using Eureka for service discovery
+  client:
+    config:
+      service1:
+        ribbon:
+          listOfServers: http://machine1:8080,http://machine2:8080,http://machine3:8080
+      service2:
+        ribbon:
+          listOfServers: http://machine4:8080,http://machine5:8080,http://machine6:8080
