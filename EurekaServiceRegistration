@@ -1,0 +1,39 @@
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public class EurekaServiceRegistration {
+
+    public static void main(String[] args) {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleAtFixedRate(EurekaServiceRegistration::registerServiceWithEureka, 0, 20, TimeUnit.SECONDS);
+    }
+
+    public static void registerServiceWithEureka() {
+        String eurekaServerUrl = "http://eureka-server-host:port";
+        String serviceName = "my-service";
+        String serviceUrl = "http://my-service-host:port";
+        
+        try {
+            URL url = new URL(eurekaServerUrl + "/eureka/apps/" + serviceName);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+
+            String payload = "{\"instance\": {\"hostName\": \"" + serviceName + "\", \"app\": \"" + serviceName + "\", \"ipAddr\": \"\", \"status\": \"UP\", \"port\": {\"$\": \"" + serviceUrl + "\", \"@enabled\": \"true\"}, \"securePort\": {\"$\": \"443\", \"@enabled\": \"true\"}, \"healthCheckUrl\": \"" + serviceUrl + "/actuator/health\", \"statusPageUrl\": \"" + serviceUrl + "/actuator/info\", \"homePageUrl\": \"" + serviceUrl + "\", \"vipAddress\": \"" + serviceName + "\", \"secureVipAddress\": \"" + serviceName + "\", \"countryId\": 1, \"dataCenterInfo\": {\"@class\": \"com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo\", \"name\": \"MyOwn\"}}}";
+
+            conn.getOutputStream().write(payload.getBytes());
+            conn.getOutputStream().flush();
+
+            int responseCode = conn.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+            conn.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
