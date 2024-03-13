@@ -1,0 +1,65 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
+public class EurekaServiceManagement {
+
+    public static void main(String[] args) {
+        String eurekaServerUrl = "http://eureka-server-host:port";
+        String serviceNameToDelete = "my-service";
+
+        String serviceInstanceId = getServiceInstanceId(eurekaServerUrl, serviceNameToDelete);
+        if (serviceInstanceId != null) {
+            deleteServiceFromEureka(eurekaServerUrl, serviceNameToDelete, serviceInstanceId);
+            System.out.println("Service " + serviceNameToDelete + " with instance ID " + serviceInstanceId + " deleted from Eureka.");
+        } else {
+            System.out.println("Service " + serviceNameToDelete + " not found in Eureka.");
+        }
+    }
+
+    public static String getServiceInstanceId(String eurekaServerUrl, String serviceName) {
+        try {
+            URL url = new URL(eurekaServerUrl + "/eureka/apps/" + serviceName);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+
+            InputStream inputStream = conn.getInputStream();
+            Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
+            String response = scanner.hasNext() ? scanner.next() : "";
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response);
+
+            JsonNode instanceIdNode = root.at("/application/instance/0/instanceId");
+            if (!instanceIdNode.isMissingNode()) {
+                return instanceIdNode.asText();
+            }
+
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void deleteServiceFromEureka(String eurekaServerUrl, String serviceName, String serviceInstanceId) {
+        try {
+            URL url = new URL(eurekaServerUrl + "/eureka/apps/" + serviceName + "/" + serviceInstanceId);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("DELETE");
+            conn.setRequestProperty("Content-Type", "application/json");
+
+            int responseCode = conn.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+            conn.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
