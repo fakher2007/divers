@@ -1,0 +1,38 @@
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = {ApplicationProps.class})
+public class ApplicationPropsTest {
+
+    @Autowired
+    private ApplicationProps applicationProps;
+
+    @Test
+    public void testProperties() {
+        assertNotNull(applicationProps.getInstances());
+        assertEquals(0, applicationProps.getInstances().size()); // Assuming initial size is 0
+
+        // Add test data
+        List<ApplicationProps.ServiceInstance> instances = new ArrayList<>();
+        ApplicationProps.ServiceInstance instance = new ApplicationProps.ServiceInstance();
+        instance.setName("testInstance");
+        // Set other properties as needed
+        instances.add(instance);
+
+        // Update properties
+        applicationProps.setInstances(instances);
+
+        // Verify properties
+        assertEquals(1, applicationProps.getInstances().size());
+        assertEquals("testInstance", applicationProps.getInstances().get(0).getName());
+        // Add more assertions as needed
+    }
+}
