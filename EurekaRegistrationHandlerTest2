@@ -1,0 +1,80 @@
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.util.List;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class YourClassNameTest {
+
+    @Mock
+    private ApplicationProps applicationProps;
+
+    @Mock
+    private InstanceCounterHelper instanceCounterHelper;
+
+    @Mock
+    private CalcapRegistryConnectionService calcapRegistryConnectionService;
+
+    @InjectMocks
+    private YourClassName yourClassName;
+
+    @Test
+    public void testRegisterServiceWithEureka_WildFlyServerDown() throws IOException {
+        // Prepare test data
+        List<ApplicationProps.ServiceInstance> instances = List.of(
+                new ApplicationProps.ServiceInstance("instance1", "localhost", "8080", "http://eureka-server", "http://service-url"),
+                new ApplicationProps.ServiceInstance("instance2", "localhost", "9090", "http://eureka-server", "http://service-url")
+                // Add more instances if needed
+        );
+
+        // Set up expectations
+        when(applicationProps.getInstances()).thenReturn(instances);
+        when(instanceCounterHelper.hasPositiveValue(anyString())).thenReturn(true);
+        doReturn(false).when(yourClassName).invokeIsWildFlyServerUp(anyString(), anyInt());
+
+        // Invoke the method
+        yourClassName.registerServiceWithEureka();
+
+        // Verify interactions
+        verify(applicationProps).getInstances();
+        verify(instanceCounterHelper, times(instances.size())).displayContent();
+        verify(instanceCounterHelper, times(instances.size())).hasPositiveValue(anyString());
+        verify(calcapRegistryConnectionService, times(instances.size())).connect(any(), anyString(), anyString());
+    }
+
+    @Test
+    public void testRegisterServiceWithEureka_WildFlyServerUp() throws IOException {
+        // Prepare test data
+        List<ApplicationProps.ServiceInstance> instances = List.of(
+                new ApplicationProps.ServiceInstance("instance1", "localhost", "8080", "http://eureka-server", "http://service-url"),
+                new ApplicationProps.ServiceInstance("instance2", "localhost", "9090", "http://eureka-server", "http://service-url")
+                // Add more instances if needed
+        );
+
+        // Set up expectations
+        when(applicationProps.getInstances()).thenReturn(instances);
+        when(instanceCounterHelper.hasPositiveValue(anyString())).thenReturn(true);
+        doReturn(true).when(yourClassName).invokeIsWildFlyServerUp(anyString(), anyInt());
+
+        // Invoke the method
+        yourClassName.registerServiceWithEureka();
+
+        // Verify interactions
+        verify(applicationProps).getInstances();
+        verify(instanceCounterHelper, times(instances.size())).displayContent();
+        verify(instanceCounterHelper, times(instances.size())).hasPositiveValue(anyString());
+        verify(calcapRegistryConnectionService, times(instances.size())).connect(any(), anyString(), anyString());
+    }
+
+    // Helper method to invoke private isWildFlyServerUp
+    private boolean invokeIsWildFlyServerUp(String hostName, int port) throws IOException {
+        return yourClassName.getClass().getDeclaredMethod("isWildFlyServerUp", String.class, int.class)
+                .invoke(yourClassName, hostName, port);
+    }
+}
