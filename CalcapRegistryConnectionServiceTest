@@ -1,0 +1,54 @@
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class CalcapRegistryConnectionServiceTest {
+
+    @Mock
+    private HttpURLConnection mockConnection;
+
+    @InjectMocks
+    private CalcapRegistryConnectionService registryConnectionService;
+
+    @Test
+    public void testAddInstance() throws IOException {
+        // Prepare test data
+        ApplicationProps.ServiceInstance instance = new ApplicationProps.ServiceInstance();
+        instance.setHostName("testHostName");
+        instance.setName("testAppName");
+
+        // Set up expectations
+        doNothing().when(mockConnection).setRequestMethod(anyString());
+        doNothing().when(mockConnection).setDoOutput(true);
+        doNothing().when(mockConnection).getOutputStream(); // Mock OutputStream
+        doNothing().when(mockConnection).getResponseCode();
+        doReturn(new URL("http://example.com")).when(mockConnection).getURL();
+        doReturn(HttpMethod.POST.name()).when(mockConnection).getRequestMethod();
+
+        // Invoke the method
+        HttpURLConnection result = registryConnectionService.addInstance(instance, mockConnection);
+
+        // Verify interactions
+        verify(mockConnection).setRequestMethod(HttpMethod.POST.name());
+        verify(mockConnection).setDoOutput(true);
+        verify(mockConnection).getOutputStream();
+        verify(mockConnection.getOutputStream()).write(any(byte[].class));
+        verify(mockConnection.getOutputStream()).flush();
+        verify(mockConnection).getResponseCode();
+        verify(mockConnection).getURL();
+        verify(mockConnection).getRequestMethod();
+
+        // Assert result
+        assertEquals(mockConnection, result);
+    }
+}
