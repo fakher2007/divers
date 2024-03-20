@@ -22,3 +22,32 @@ public class WildFlyServerChecker {
         }
     }
 }
+---------------
+unit test
+---------------
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.net.Socket;
+
+import org.junit.jupiter.api.Test;
+
+public class ServerCheckerTest {
+
+    @Test
+    void testIsWildflyServerUp() throws IOException {
+        // Mocking
+        Socket mockSocket = mock(Socket.class);
+        whenNew(Socket.class).withArguments("example.com", 8080).thenReturn(mockSocket);
+
+        // Test when socket creation is successful
+        assertTrue(new ServerChecker().isWildflyServerUp("example.com", 8080));
+
+        // Test when IOException occurs
+        whenNew(Socket.class).withArguments("example.com", 8081).thenThrow(new IOException());
+        assertFalse(new ServerChecker().isWildflyServerUp("example.com", 8081));
+    }
+}
+
