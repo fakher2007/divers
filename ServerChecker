@@ -1,0 +1,53 @@
+import java.io.IOException;
+import java.net.Socket;
+
+public class ServerChecker {
+
+    public boolean isWildflyServerUp(String host, int port) {
+        try {
+            Socket socket = createSocket(host, port);
+            socket.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    protected Socket createSocket(String host, int port) throws IOException {
+        return new Socket(host, port);
+    }
+}
+-------------
+unit test
+-------------
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.net.Socket;
+
+import org.junit.jupiter.api.Test;
+
+public class ServerCheckerTest {
+
+    @Test
+    void testIsWildflyServerUp() throws IOException {
+        // Mocking
+        Socket mockSocket = mock(Socket.class);
+        ServerChecker serverChecker = new ServerChecker() {
+            @Override
+            protected Socket createSocket(String host, int port) throws IOException {
+                return mockSocket;
+            }
+        };
+
+        // Test when socket creation is successful
+        assertTrue(serverChecker.isWildflyServerUp("example.com", 8080));
+
+        // Test when IOException occurs
+        when(mockSocket.getInputStream()).thenThrow(new IOException());
+        assertFalse(serverChecker.isWildflyServerUp("example.com", 8081));
+    }
+}
+
