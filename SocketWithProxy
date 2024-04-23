@@ -71,4 +71,66 @@ class ProxyConfig {
         return port;
     }
 }
+‐-------------------------
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
+public class WebServerChecker {
+    public static void main(String[] args) {
+        String host = "your_web_server_address";
+        int port = 80; // HTTP port
+        
+        String proxyUsername = "your_proxy_username";
+        String proxyPassword = "your_proxy_password";
+        
+        List<ProxyConfig> proxies = new ArrayList<>();
+        proxies.add(new ProxyConfig("proxy1_host", 8080));
+        proxies.add(new ProxyConfig("proxy2_host", 8081));
+        // Add more proxies as needed
+        
+        // Set up Authenticator for proxy authentication
+        Authenticator.setDefault(new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
+            }
+        });
+        
+        for (ProxyConfig proxyConfig : proxies) {
+            try {
+                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConfig.getHost(), proxyConfig.getPort()));
+                Socket socket = new Socket(proxy);
+                socket.connect(new InetSocketAddress(host, port), 5000); // 5 seconds timeout
+                System.out.println("Web server is running through proxy: " + proxyConfig.getHost());
+                socket.close();
+            } catch (Exception e) {
+                System.out.println("Failed to connect through proxy: " + proxyConfig.getHost());
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+class ProxyConfig {
+    private String host;
+    private int port;
+
+    public ProxyConfig(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+}
+
 
