@@ -334,6 +334,66 @@ public class ServerCheckerTest {
         verify(mockConnection).disconnect();
     }
 }
+-----------
+test without whenNew
+------------
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.net.*;
+import java.util.Collections;
+
+@ExtendWith(MockitoExtension.class)
+public class ServerCheckerTest {
+
+    @InjectMocks
+    private ServerChecker serverChecker;
+
+    @Mock
+    private ProxyProps proxyProps;
+
+    @Mock
+    private URL mockUrl;
+
+    @Mock
+    private HttpURLConnection mockConnection;
+
+    @BeforeEach
+    public void setup() throws IOException {
+        when(proxyProps.getInstances()).thenReturn(Collections.singletonList(new ProxyProps.ProxyInstance("proxyHost", 8080)));
+
+        when(mockUrl.openConnection(any(Proxy.class))).thenReturn(mockConnection);
+    }
+
+    @Test
+    public void testConnectViaProxySuccessfulConnection() throws Exception {
+        when(mockConnection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
+
+        assertTrue(serverChecker.connectViaProxy("google.com", 80));
+
+        verify(mockConnection).connect();
+        verify(mockConnection).disconnect();
+    }
+
+    @Test
+    public void testConnectViaProxyConnectionFailure() throws Exception {
+        when(mockConnection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_NOT_FOUND);
+
+        assertFalse(serverChecker.connectViaProxy("google.com", 80));
+
+        verify(mockConnection).connect();
+        verify(mockConnection).disconnect();
+    }
+}
+
 
 
 
