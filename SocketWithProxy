@@ -267,5 +267,76 @@ public class ServerCheckerTest {
         assertFalse(serverChecker.connectViaProxy("invalidHost", 80));
     }
 }
+-------------
+unit test 2
+---‐---------
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.io.IOException;
+import java.net.*;
+import java.util.Collections;
+
+public class ServerCheckerTest {
+
+    @InjectMocks
+    private ServerChecker serverChecker;
+
+    @Mock
+    private ProxyProps proxyProps;
+
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    public void testConnectViaProxySuccessfulConnection() throws Exception {
+        ProxyProps.ProxyInstance proxyInstance = new ProxyProps.ProxyInstance("proxyHost", 8080);
+        when(proxyProps.getInstances()).thenReturn(Collections.singletonList(proxyInstance));
+
+        HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+        when(mockConnection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
+
+        URL mockUrl = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(mockUrl);
+        
+        when(mockUrl.openConnection(any(Proxy.class))).thenReturn(mockConnection);
+
+        assertTrue(serverChecker.connectViaProxy("google.com", 80));
+        
+        verify(mockConnection).connect();
+        verify(mockConnection).disconnect();
+    }
+
+    @Test
+    public void testConnectViaProxyConnectionFailure() throws Exception {
+        ProxyProps.ProxyInstance proxyInstance = new ProxyProps.ProxyInstance("proxyHost", 8080);
+        when(proxyProps.getInstances()).thenReturn(Collections.singletonList(proxyInstance));
+
+        HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+        when(mockConnection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_NOT_FOUND); // Simulate connection failure
+
+        URL mockUrl = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(mockUrl);
+        
+        when(mockUrl.openConnection(any(Proxy.class))).thenReturn(mockConnection);
+
+        assertFalse(serverChecker.connectViaProxy("google.com", 80));
+        
+        verify(mockConnection).connect();
+        verify(mockConnection).disconnect();
+    }
+}
+
+
+
+
 
 
