@@ -195,5 +195,77 @@ class ProxyConfig {
         return port;
     }
 }
+--------------
+unit tests
+--------------
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.io.IOException;
+import java.net.*;
+import java.util.Arrays;
+import java.util.Collections;
+
+public class ServerCheckerTest {
+
+    @InjectMocks
+    private ServerChecker serverChecker;
+
+    @Mock
+    private ProxyProps proxyProps;
+
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    public void testIsServerUpWithValidHostAndPort() throws IOException {
+        assertTrue(serverChecker.isServerUp("google.com", 80));
+    }
+
+    @Test
+    public void testIsServerUpWithInvalidHostAndPort() {
+        assertFalse(serverChecker.isServerUp("invalidhost", 80));
+    }
+
+    @Test
+    public void testIsServerUpWithLocalhostAndProxy() {
+        when(proxyProps.isUse()).thenReturn(true);
+        when(proxyProps.getInstances()).thenReturn(Collections.singletonList(
+                new ProxyProps.ProxyInstance("proxyHost", 8080)
+        ));
+        assertTrue(serverChecker.isServerUp("localhost", 80));
+    }
+
+    @Test
+    public void testCreateSocket() throws IOException {
+        Socket socket = serverChecker.createSocket("google.com", 80);
+        assertNotNull(socket);
+    }
+
+    @Test
+    public void testConnectViaProxy() throws Exception {
+        ProxyProps.ProxyInstance proxyInstance = new ProxyProps.ProxyInstance("proxyHost", 8080);
+        when(proxyProps.getInstances()).thenReturn(Collections.singletonList(proxyInstance));
+
+        assertTrue(serverChecker.connectViaProxy("google.com", 80));
+    }
+
+    @Test
+    public void testConnectViaProxyWithException() throws Exception {
+        when(proxyProps.getInstances()).thenReturn(Collections.singletonList(
+                new ProxyProps.ProxyInstance("proxyHost", 8080)
+        ));
+
+        assertFalse(serverChecker.connectViaProxy("invalidHost", 80));
+    }
+}
 
 
