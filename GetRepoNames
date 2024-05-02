@@ -1,0 +1,17 @@
+def get_repo_names():
+    repos = [
+        ('https://github.com/username/repo1.git', 'main'),
+        ('https://github.com/username/repo2.git', 'development'),
+        ('https://github.com/username/repo3.git', 'master'),
+        ('https://github.com/username/repo4.git', 'feature/branch'),
+        ('https://github.com/username/frontend.git', 'main')  # Add frontend repository here
+    ]
+
+    # Extract repo names from the repos array
+    repo_names = [repo[0].split('/')[-1].split('.')[0] for repo in repos]
+
+    return repo_names
+
+# Example usage:
+repo_names = get_repo_names()
+print(repo_names)
