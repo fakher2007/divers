@@ -1,0 +1,286 @@
+---------------------
+add param --projects + abbreviarion
+---------------------
+import os
+import subprocess
+import argparse
+import shutil
+
+def download_repo(repo):
+    repo_url, branch_name = repo
+    subprocess.run(['git', 'clone', '-b', branch_name, repo_url])
+
+def build_artifact(repo_name):
+    os.chdir(repo_name)
+    subprocess.run(['./mvnw', 'clean', 'package'])
+    os.chdir('..')
+
+def run_application(repo, env_variables):
+    repo_name, branch_name = repo
+    os.chdir(repo_name)
+    subprocess.run(['./mvnw', 'clean', 'package'])
+
+    cmd = ['java', '-jar', 'target/myapp.jar']
+    for env_var, value in env_variables.items():
+        cmd.append('-D{}={}'.format(env_var, value))
+
+    subprocess.Popen(['cmder', '/START', 'cmd', '/K'] + cmd)
+
+    os.chdir('..')
+
+def clean_repos():
+    repos = [dI for dI in os.listdir('.') if os.path.isdir(dI)]
+    for repo in repos:
+        try:
+            shutil.rmtree(repo)
+            print(f'Repo "{repo}" is removed.')
+        except OSError as e:
+            print(f'Error removing repo "{repo}": {e}')
+
+def build_frontend(project=None):
+    os.chdir('frontend')  # Change to the frontend directory
+    subprocess.run(['npm', 'install'])  # Install dependencies
+    if project:
+        subprocess.run(['npm', 'run', 'build', '--', project])  # Build the specified project
+    else:
+        subprocess.run(['npm', 'run', 'build'])  # Build the frontend
+    os.chdir('..')  # Go back to the original directory
+
+def run_frontend():
+    os.chdir('frontend')  # Change to the frontend directory
+    subprocess.run(['npm', 'start'])  # Run the frontend
+    os.chdir('..')  # Go back to the original directory
+
+def main():
+    action_abbreviations = {
+        'db': 'download',
+        'bb': 'buildback',
+        'rb': 'runback',
+        'bf': 'buildfront',
+        'rf': 'runfront',
+        'cl': 'clean'
+    }
+
+    parser = argparse.ArgumentParser(description='Spring Boot JAR and React Frontend CLI')
+
+    parser.add_argument('commands', nargs='+', help='Commands to execute in the given order (e.g., clean download buildback)')
+    parser.add_argument('--projects', nargs='+', help='Specify the list of projects to operate on')
+    args = parser.parse_args()
+
+    full_commands = [action_abbreviations[command] if command in action_abbreviations else command for command in args.commands]
+
+    if args.projects:
+        projects = args.projects
+    else:
+        projects = [None]
+
+    repos = [
+        ('https://github.com/username/repo1.git', 'main'),
+        ('https://github.com/username/repo2.git', 'development'),
+        ('https://github.com/username/repo3.git', 'master'),
+        ('https://github.com/username/repo4.git', 'feature/branch'),
+        ('https://github.com/username/frontend.git', 'main')  # Add frontend repository here
+    ]
+
+    env_variables_list = [
+        {
+            'ENV_VAR1': 'value1',
+            'ENV_VAR2': 'value2'
+        },
+        {
+            'ENV_VAR3': 'value3',
+            'ENV_VAR4': 'value4'
+        },
+        {
+            'ENV_VAR5': 'value5',
+            'ENV_VAR6': 'value6'
+        },
+        {
+            'ENV_VAR7': 'value7',
+            'ENV_VAR8': 'value8'
+        },
+        {}  # Empty dictionary for frontend
+    ]
+
+    for project in projects:
+        for command in full_commands:
+            if command == 'download':
+                for repo in repos:
+                    download_repo(repo)
+            elif command == 'buildfront':
+                build_frontend(project)
+            elif command == 'runfront':
+                run_frontend()
+            elif command == 'buildback':
+                for repo in repos:
+                    if repo[0].endswith('frontend.git'):
+                        continue  # Skip frontend repo
+                    build_artifact(repo[0].split('/')[-1].split('.')[0])
+            elif command == 'runback':
+                for repo, env_variables in zip(repos, env_variables_list):
+                    if repo[0].endswith('frontend.git'):
+                        continue  # Skip frontend repo
+                    run_application(repo, env_variables)
+            elif command == 'clean':
+                clean_repos()
+
+if __name__ == '__main__':
+    main()
+
+-------------------
+copcli
+-------------------
+copcli/
+├── __init__.py
+└── cli.py
+
+Here's how your cli.py might look after reorganizing:
+
+#!/usr/bin/env python
+import os
+import subprocess
+import argparse
+import shutil
+
+def download_repo(repo):
+    repo_url, branch_name = repo
+    subprocess.run(['git', 'clone', '-b', branch_name, repo_url])
+
+def build_artifact(repo_name):
+    os.chdir(repo_name)
+    subprocess.run(['./mvnw', 'clean', 'package'])
+    os.chdir('..')
+
+def run_application(repo, env_variables):
+    repo_name, branch_name = repo
+    os.chdir(repo_name)
+    subprocess.run(['./mvnw', 'clean', 'package'])
+
+    cmd = ['java', '-jar', 'target/myapp.jar']
+    for env_var, value in env_variables.items():
+        cmd.append('-D{}={}'.format(env_var, value))
+
+    subprocess.Popen(['cmder', '/START', 'cmd', '/K'] + cmd)
+
+    os.chdir('..')
+
+def clean_repos():
+    repos = [dI for dI in os.listdir('.') if os.path.isdir(dI)]
+    for repo in repos:
+        try:
+            shutil.rmtree(repo)
+            print(f'Repo "{repo}" is removed.')
+        except OSError as e:
+            print(f'Error removing repo "{repo}": {e}')
+
+def build_frontend(project=None):
+    os.chdir('frontend')  # Change to the frontend directory
+    subprocess.run(['npm', 'install'])  # Install dependencies
+    if project:
+        subprocess.run(['npm', 'run', 'build', '--', project])  # Build the specified project
+    else:
+        subprocess.run(['npm', 'run', 'build'])  # Build the frontend
+    os.chdir('..')  # Go back to the original directory
+
+def run_frontend():
+    os.chdir('frontend')  # Change to the frontend directory
+    subprocess.run(['npm', 'start'])  # Run the frontend
+    os.chdir('..')  # Go back to the original directory
+
+def main():
+    action_abbreviations = {
+        'db': 'download',
+        'bb': 'buildback',
+        'rb': 'runback',
+        'bf': 'buildfront',
+        'rf': 'runfront',
+        'cl': 'clean'
+    }
+
+    parser = argparse.ArgumentParser(description='Spring Boot JAR and React Frontend CLI')
+
+    parser.add_argument('commands', nargs='+', help='Commands to execute in the given order (e.g., clean download buildback)')
+    parser.add_argument('--projects', nargs='+', help='Specify the list of projects to operate on')
+    args = parser.parse_args()
+
+    full_commands = [action_abbreviations[command] if command in action_abbreviations else command for command in args.commands]
+
+    if args.projects:
+        projects = args.projects
+    else:
+        projects = [None]
+
+    repos = [
+        ('https://github.com/username/repo1.git', 'main'),
+        ('https://github.com/username/repo2.git', 'development'),
+        ('https://github.com/username/repo3.git', 'master'),
+        ('https://github.com/username/repo4.git', 'feature/branch'),
+        ('https://github.com/username/frontend.git', 'main')  # Add frontend repository here
+    ]
+
+    env_variables_list = [
+        {
+            'ENV_VAR1': 'value1',
+            'ENV_VAR2': 'value2'
+        },
+        {
+            'ENV_VAR3': 'value3',
+            'ENV_VAR4': 'value4'
+        },
+        {
+            'ENV_VAR5': 'value5',
+            'ENV_VAR6': 'value6'
+        },
+        {
+            'ENV_VAR7': 'value7',
+            'ENV_VAR8': 'value8'
+        },
+        {}  # Empty dictionary for frontend
+    ]
+
+    for project in projects:
+        for command in full_commands:
+            if command == 'download':
+                for repo in repos:
+                    download_repo(repo)
+            elif command == 'buildfront':
+                build_frontend(project)
+            elif command == 'runfront':
+                run_frontend()
+            elif command == 'buildback':
+                for repo in repos:
+                    if repo[0].endswith('frontend.git'):
+                        continue  # Skip frontend repo
+                    build_artifact(repo[0].split('/')[-1].split('.')[0])
+            elif command == 'runback':
+                for repo, env_variables in zip(repos, env_variables_list):
+                    if repo[0].endswith('frontend.git'):
+                        continue  # Skip frontend repo
+                    run_application(repo, env_variables)
+            elif command == 'clean':
+                clean_repos()
+
+if __name__ == '__main__':
+    main()
+
+And here's how your setup.py should look:
+
+from setuptools import setup, find_packages
+
+setup(
+    name='copcli',
+    version='0.1',
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'copcli = copcli.cli:main'
+        ]
+    }
+)
+
+With this setup, users can install your package using pip install . from the copcli directory. 
+After installation, they can use your script directly from the command line
+like this:
+copcli clean download --projects p1 p2
+
+
