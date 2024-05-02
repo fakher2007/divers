@@ -15,3 +15,12 @@ def get_repo_names():
 # Example usage:
 repo_names = get_repo_names()
 print(repo_names)
+----------------
+run front
+----------------
+def run_frontend():
+    os.chdir('frontend')  # Change to the frontend directory
+    for i, port in enumerate(range(4900, 4900 + len(repos))):
+        subprocess.Popen(['npm', 'start', '--', '--port', str(port)], cwd=f'app{i}')
+        print(f'Angular app {i} started on port {port}.')
+    os.chdir('..')  # Go back to the original directory
