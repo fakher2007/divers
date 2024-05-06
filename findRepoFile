@@ -52,3 +52,61 @@ def main():
 
 if __name__ == '__main__':
     main()
+-----------
+import os
+import json
+import site
+
+def get_user_site_packages():
+    return site.USER_SITE
+
+def get_repo_json_file():
+    # Check if repo.json file exists in the current directory
+    current_dir = os.getcwd()
+    repo_json_path = os.path.join(current_dir, 'repo.json')
+    if os.path.isfile(repo_json_path):
+        return repo_json_path
+    
+    # If repo.json file not found in current directory, check user site-packages directory
+    user_site_packages = get_user_site_packages()
+    repo_json_path_site = os.path.join(user_site_packages, 'repo.json')
+    if os.path.isfile(repo_json_path_site):
+        return repo_json_path_site
+    
+    # If repo.json file not found in user site-packages directory, return None
+    return None
+
+def load_repos_from_file():
+    repo_json_path = get_repo_json_file()
+    if repo_json_path:
+        with open(repo_json_path, 'r') as file:
+            data = json.load(file)
+        
+        repos = [(repo['url'], repo['branch']) for repo in data.get('repos', [])]
+        dependencies = [(dep['url'], dep['branch']) for dep in data.get('dependencies', [])]
+        front_repos = [(front_repo['url'], front_repo['branch']) for front_repo in data.get('front_repos', [])]
+
+        return repos, dependencies, front_repos
+    else:
+        print("repo.json file not found.")
+        return [], [], []
+
+def main():
+    # Load repositories from repo.json file
+    repos, dependencies, front_repos = load_repos_from_file()
+
+    # Process repositories
+    print("Main Repositories:")
+    for url, branch in repos:
+        print(f"URL: {url}, Branch: {branch}")
+
+    print("\nDependencies:")
+    for url, branch in dependencies:
+        print(f"URL: {url}, Branch: {branch}")
+
+    print("\nFrontend Repositories:")
+    for url, branch in front_repos:
+        print(f"URL: {url}, Branch: {branch}")
+
+if __name__ == '__main__':
+    main()
