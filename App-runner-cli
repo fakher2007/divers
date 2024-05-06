@@ -283,4 +283,22 @@ After installation, they can use your script directly from the command line
 like this:
 copcli clean download --projects p1 p2
 
+---------------
+from setuptools import setup, find_packages
+
+setup(
+    name='copcli',
+    version='1.0',
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'copcli=copcli.cli:main'
+        ]
+    },
+    package_data={
+        'copcli': ['repos.json']
+    },
+)
+
+
 
