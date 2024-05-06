@@ -67,3 +67,37 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+-----------,,,,,
+import json
+
+def load_repos_from_file(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    
+    repos = [(repo['url'], repo['branch']) for repo in data.get('repos', [])]
+    dependencies = [(dep['url'], dep['branch']) for dep in data.get('dependencies', [])]
+    front_repos = [(front_repo['url'], front_repo['branch']) for front_repo in data.get('front_repos', [])]
+
+    return repos, dependencies, front_repos
+
+def main():
+    # Load repositories from JSON file
+    repos, dependencies, front_repos = load_repos_from_file('repos.json')
+
+    # Process repositories
+    print("Main Repositories:")
+    for url, branch in repos:
+        print(f"URL: {url}, Branch: {branch}")
+
+    print("\nDependencies:")
+    for url, branch in dependencies:
+        print(f"URL: {url}, Branch: {branch}")
+
+    print("\nFrontend Repositories:")
+    for url, branch in front_repos:
+        print(f"URL: {url}, Branch: {branch}")
+
+if __name__ == '__main__':
+    main()
