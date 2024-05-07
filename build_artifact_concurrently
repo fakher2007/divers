@@ -1,0 +1,65 @@
+import os
+import subprocess
+import argparse
+import shutil
+import concurrent.futures
+
+def download_repo(repo):
+    repo_url, branch_name = repo
+    subprocess.run(['git', 'clone', '-b', branch_name, repo_url])
+
+def build_artifact(repo_name):
+    os.chdir(repo_name)
+    subprocess.run(['./mvnw', 'clean', 'package'])
+    os.chdir('..')
+
+def run_application(repo, env_variables):
+    repo_name, branch_name = repo
+    os.chdir(repo_name)
+    subprocess.run(['./mvnw', 'clean', 'package'])
+
+    cmd = ['java', '-jar', 'target/myapp.jar']
+    for env_var, value in env_variables.items():
+        cmd.append('-D{}={}'.format(env_var, value))
+
+    subprocess.Popen(['cmder', '/START', 'cmd', '/K'] + cmd)
+
+    os.chdir('..')
+
+def clean_repos():
+    repos = [dI for dI in os.listdir('.') if os.path.isdir(dI)]
+    for repo in repos:
+        try:
+            shutil.rmtree(repo)
+            print(f'Repo "{repo}" is removed.')
+        except OSError as e:
+            print(f'Error removing repo "{repo}": {e}')
+
+def build_artifacts_concurrently(repos):
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Submit build_artifact tasks for each repo
+        future_to_repo = {executor.submit(build_artifact, repo[0]): repo for repo in repos}
+        
+        # Wait for all tasks to complete
+        for future in concurrent.futures.as_completed(future_to_repo):
+            repo_name = future_to_repo[future][0]
+            try:
+                future.result()
+                print(f"Build completed for repo '{repo_name}'")
+            except Exception as exc:
+                print(f"Build failed for repo '{repo_name}': {exc}")
+
+def main():
+    # Your main function code here
+    
+    # Example usage:
+    repos = [
+        ('repo1', 'main'),
+        ('repo2', 'development'),
+        ('repo3', 'master')
+    ]
+    
+    build_artifacts_concurrently(repos)
+
+if __name__ == '__main__':
+    main()
