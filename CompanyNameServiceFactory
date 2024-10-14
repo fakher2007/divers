@@ -1,0 +1,189 @@
+ import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface CompanyService {
+    String companyName();
+}
+
+@CompanyService(companyName = "companyA")
+@Service("serviceA1")
+public class ServiceA1Impl implements ServiceA {
+    @Override
+    public void performActionA() {
+        // Implementation for Service A1
+    }
+}
+
+@CompanyService(companyName = "companyA")
+@Service("serviceA2")
+public class ServiceA2Impl implements ServiceA {
+    @Override
+    public void performActionA() {
+        // Implementation for Service A2
+    }
+}
+
+@CompanyService(companyName = "companyB")
+@Service("serviceB1")
+public class ServiceB1Impl implements ServiceB {
+    @Override
+    public void performActionB() {
+        // Implementation for Service B1
+    }
+}
+
+@CompanyService(companyName = "companyC")
+@Service("serviceC1")
+public class ServiceC1Impl implements ServiceC {
+    @Override
+    public void performActionC() {
+        // Implementation for Service C1
+    }
+}
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Component
+public class ServiceFactory {
+
+    private final ApplicationContext applicationContext;
+    private final Map<String, List<Object>> companyServiceMap;
+
+    @Autowired
+    public ServiceFactory(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.companyServiceMap = new HashMap<>();
+        initializeCompanyServiceMap();
+    }
+
+    private void initializeCompanyServiceMap() {
+        Map<String, Object> serviceBeans = applicationContext.getBeansWithAnnotation(CompanyService.class);
+
+        for (Object serviceBean : serviceBeans.values()) {
+            CompanyService companyServiceAnnotation = serviceBean.getClass().getAnnotation(CompanyService.class);
+            String companyName = companyServiceAnnotation.companyName();
+
+            companyServiceMap.computeIfAbsent(companyName, k -> new ArrayList<>()).add(serviceBean);
+        }
+    }
+
+    public <T> T getService(String companyCode, Class<T> serviceType) {
+        List<Object> services = companyServiceMap.get(companyCode);
+        if (services == null || services.isEmpty()) {
+            throw new IllegalArgumentException("No services found for company code: " + companyCode);
+        }
+
+        List<T> matchingServices = services.stream()
+                .filter(serviceType::isInstance)
+                .map(serviceType::cast)
+                .collect(Collectors.toList());
+
+        if (matchingServices.isEmpty()) {
+            throw new IllegalArgumentException("No service of type " + serviceType.getName() + " found for company code: " + companyCode);
+        }
+
+        if (matchingServices.size() > 1) {
+            throw new IllegalArgumentException("Multiple services of type " + serviceType.getName() + " found for company code: " + companyCode);
+        }
+
+        return matchingServices.get(0);
+    }
+}
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Component
+public class TokenFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        String token = extractToken(request);
+        if (token != null) {
+            String companyCode = extractCompanyCodeFromToken(token);
+            request.setAttribute("companyCode", companyCode);
+        }
+        filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        // Implement your logic to extract the token from the request
+        // For example, from the Authorization header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
+    }
+
+    private String extractCompanyCodeFromToken(String token) {
+        // Implement your logic to extract the company code from the token
+        // This is just a placeholder implementation
+        return "companyA"; // Replace with actual token parsing logic
+    }
+}
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+
+@RestController
+public class MyController {
+
+    private final ServiceFactory serviceFactory;
+
+    @Autowired
+    public MyController(ServiceFactory serviceFactory) {
+        this.serviceFactory = serviceFactory;
+    }
+
+    @GetMapping("/performActionA")
+    public String performActionA(HttpServletRequest request) {
+        String companyCode = (String) request.getAttribute("companyCode");
+        ServiceA serviceA = serviceFactory.getService(companyCode, ServiceA.class);
+        serviceA.performActionA();
+        return "Action A performed for company: " + companyCode;
+    }
+
+    @GetMapping("/performActionB")
+    public String performActionB(HttpServletRequest request) {
+        String companyCode = (String) request.getAttribute("companyCode");
+        ServiceB serviceB = serviceFactory.getService(companyCode, ServiceB.class);
+        serviceB.performActionB();
+        return "Action B performed for company: " + companyCode;
+    }
+
+    @GetMapping("/performActionC")
+    public String performActionC(HttpServletRequest request) {
+        String companyCode = (String) request.getAttribute("companyCode");
+        ServiceC serviceC = serviceFactory.getService(companyCode, ServiceC.class);
+        serviceC.performActionC();
+        return "Action C performed for company: " + companyCode;
+    }
+}
+
+
+
+
+
+
