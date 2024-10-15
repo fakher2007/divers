@@ -580,7 +580,155 @@ public class DefaultDocumentServiceTest {
         assertEquals(expectedDocuments, result);
     }
 }
+-------
+test
+-------
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+
+import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
+import java.util.List;
+
+@ExtendWith(MockitoExtension.class)
+public class DefaultDocumentServiceTest {
+
+    @Mock
+    private AsterionDocsService asterionDocsService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private TokenProvider tokenProvider;
+
+    @Mock
+    private GatewayFeignClient gatewayFeignClient;
+
+    @Mock
+    private CommonHelper commonHelper;
+
+    @InjectMocks
+    private DefaultDocumentService defaultDocumentService;
+
+    @BeforeEach
+    public void setUp() {
+        // Initialize any necessary setup here
+    }
+
+    @Test
+    public void testSearchMw() throws ApiStatusException {
+        // Arrange
+        Account[] accountsEntity = new Account[]{new Account("12345"), new Account("67890")};
+        String libelleUg3 = "testLibelle";
+        String userRole = "testRole";
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = true;
+
+        GedResponse expectedResponse = new GedResponse();
+        ResponseEntity<GedResponse> responseEntity = ResponseEntity.ok(expectedResponse);
+
+        when(commonHelper.calcAndParse(eq(GedResponse.class), any(GedRequest.class), eq(new Object[]{onlyWithCategories}))).thenReturn(responseEntity);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchMw(accountsEntity, libelleUg3, userRole, companyCode, onlyWithCategories);
+
+        // Assert
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    public void testSearchMw_EmptyAccounts() throws ApiStatusException {
+        // Arrange
+        Account[] accountsEntity = new Account[]{};
+        String libelleUg3 = "testLibelle";
+        String userRole = "testRole";
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = true;
+
+        GedResponse expectedResponse = new GedResponse();
+        ResponseEntity<GedResponse> responseEntity = ResponseEntity.ok(expectedResponse);
+
+        when(commonHelper.calcAndParse(eq(GedResponse.class), any(GedRequest.class), eq(new Object[]{onlyWithCategories}))).thenReturn(responseEntity);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchMw(accountsEntity, libelleUg3, userRole, companyCode, onlyWithCategories);
+
+        // Assert
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    public void testSearchMw_NullAccounts() throws ApiStatusException {
+        // Arrange
+        Account[] accountsEntity = null;
+        String libelleUg3 = "testLibelle";
+        String userRole = "testRole";
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = true;
+
+        GedResponse expectedResponse = new GedResponse();
+        ResponseEntity<GedResponse> responseEntity = ResponseEntity.ok(expectedResponse);
+
+        when(commonHelper.calcAndParse(eq(GedResponse.class), any(GedRequest.class), eq(new Object[]{onlyWithCategories}))).thenReturn(responseEntity);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchMw(accountsEntity, libelleUg3, userRole, companyCode, onlyWithCategories);
+
+        // Assert
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    public void testSearchMw_WithCategories() throws ApiStatusException {
+        // Arrange
+        Account[] accountsEntity = new Account[]{new Account("12345"), new Account("67890")};
+        String libelleUg3 = "testLibelle";
+        String userRole = "testRole";
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = true;
+
+        GedResponse expectedResponse = new GedResponse();
+        ResponseEntity<GedResponse> responseEntity = ResponseEntity.ok(expectedResponse);
+
+        when(commonHelper.calcAndParse(eq(GedResponse.class), any(GedRequest.class), eq(new Object[]{onlyWithCategories}))).thenReturn(responseEntity);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchMw(accountsEntity, libelleUg3, userRole, companyCode, onlyWithCategories);
+
+        // Assert
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    public void testSearchMw_WithoutCategories() throws ApiStatusException {
+        // Arrange
+        Account[] accountsEntity = new Account[]{new Account("12345"), new Account("67890")};
+        String libelleUg3 = "testLibelle";
+        String userRole = "testRole";
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = false;
+
+        GedResponse expectedResponse = new GedResponse();
+        ResponseEntity<GedResponse> responseEntity = ResponseEntity.ok(expectedResponse);
+
+        when(commonHelper.calcAndParse(eq(GedResponse.class), any(GedRequest.class), eq(new Object[]{onlyWithCategories}))).thenReturn(responseEntity);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchMw(accountsEntity, libelleUg3, userRole, companyCode, onlyWithCategories);
+
+        // Assert
+        assertEquals(expectedResponse, result);
+    }
+}
 
 
     @CompanyService(companyName = "CompanyB")
