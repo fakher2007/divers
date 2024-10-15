@@ -258,6 +258,118 @@ public class DocumentResourceTest {
         });
     }
 }
+-------
+test
+-------
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
+
+@ExtendWith(MockitoExtension.class)
+public class ServiceFactoryTest {
+
+    @Mock
+    private ApplicationContext applicationContext;
+
+    @InjectMocks
+    private ServiceFactory serviceFactory;
+
+    @BeforeEach
+    public void setUp() {
+        // Mock the application context to return specific beans
+        Map<String, Object> serviceBeans = new HashMap<>();
+        serviceBeans.put("service1", new MockService1());
+        serviceBeans.put("service2", new MockService2());
+
+        when(applicationContext.getBeansWithAnnotation(CompanyService.class)).thenReturn(serviceBeans);
+
+        // Initialize the service factory
+        serviceFactory.initializeCompanyServiceMap();
+    }
+
+    @Test
+    public void testGetService_Success() {
+        // Arrange
+        String companyCode = "CompanyA";
+        Class<MockService1> serviceType = MockService1.class;
+
+        // Act
+        MockService1 service = serviceFactory.getService(companyCode, serviceType);
+
+        // Assert
+        assertNotNull(service);
+        assertEquals(MockService1.class, service.getClass());
+    }
+
+    @Test
+    public void testGetService_NoServicesFound() {
+        // Arrange
+        String companyCode = "NonExistentCompany";
+        Class<MockService1> serviceType = MockService1.class;
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            serviceFactory.getService(companyCode, serviceType);
+        });
+
+        assertEquals("No services found for company code: " + companyCode, exception.getMessage());
+    }
+
+    @Test
+    public void testGetService_NoMatchingServiceType() {
+        // Arrange
+        String companyCode = "CompanyA";
+        Class<NonExistentService> serviceType = NonExistentService.class;
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            serviceFactory.getService(companyCode, serviceType);
+        });
+
+        assertEquals("No service of type " + serviceType.getName() + " found for company code: " + companyCode, exception.getMessage());
+    }
+
+    @Test
+    public void testGetService_MultipleMatchingServices() {
+        // Arrange
+        String companyCode = "CompanyA";
+        Class<MockService1> serviceType = MockService1.class;
+
+        // Add another service of the same type to the map
+        serviceFactory.getCompanyServiceMap().get(companyCode).add(new MockService1());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            serviceFactory.getService(companyCode, serviceType);
+        });
+
+        assertEquals("Multiple services of type " + serviceType.getName() + " found for company code: " + companyCode, exception.getMessage());
+    }
+
+    // Mock service classes with CompanyService annotation
+    @CompanyService(companyName = "CompanyA")
+    private static class MockService1 {
+    }
+
+    @CompanyService(companyName = "CompanyB")
+    private static class MockService2 {
+    }
+
+    private static class NonExistentService {
+    }
+}
 
 
 
