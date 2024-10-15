@@ -476,6 +476,110 @@ public class ServiceFactoryTest {
     }
 }
 
+------
+test
+------
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+
+@ExtendWith(MockitoExtension.class)
+public class DefaultDocumentServiceTest {
+
+    @Mock
+    private AsterionDocsService asterionDocsService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private TokenProvider tokenProvider;
+
+    @Mock
+    private GatewayFeignClient gatewayFeignClient;
+
+    @Mock
+    private CommonHelper commonHelper;
+
+    @InjectMocks
+    private DefaultDocumentService defaultDocumentService;
+
+    @BeforeEach
+    public void setUp() {
+        // Initialize any necessary setup here
+    }
+
+    @Test
+    public void testSearchFile() throws ApiStatusException {
+        // Arrange
+        String libelleug3 = "testLibelle";
+        String userRole = "testRole";
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = true;
+
+        Account[] accounts = new Account[]{new Account(), new Account()};
+        ResponseEntity<Object> responseEntity = ResponseEntity.ok(accounts);
+
+        when(commonHelper.calcRequestBuilder(any(HttpMethod.class), eq(MaUrl.ACCOUNTS), eq(null), eq("true"))).thenReturn(responseEntity);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchFile(libelleug3, userRole, companyCode, onlyWithCategories);
+
+        // Assert
+        // Add assertions based on the expected behavior of the searchFile method
+        // For example, you might want to verify that the result is as expected
+        // assertEquals(expectedGedResponse, result);
+    }
+
+    @Test
+    public void testSearchPche() throws ApiStatusException {
+        // Arrange
+        AsterionDocVn asterionDocVn = new AsterionDocVn();
+        String companyCode = "testCompany";
+        boolean onlyWithCategories = true;
+
+        GedResponse expectedResponse = new GedResponse();
+        when(asterionDocsService.searchPcsMw(asterionDocVn, companyCode, onlyWithCategories)).thenReturn(expectedResponse);
+
+        // Act
+        GedResponse result = defaultDocumentService.searchPche(asterionDocVn, companyCode, onlyWithCategories);
+
+        // Assert
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    public void testSearch() throws ApiStatusException {
+        // Arrange
+        String libelleug3 = "testLibelle";
+        String companyCode = "testCompany";
+
+        Account[] accounts = new Account[]{new Account(), new Account()};
+        ResponseEntity<Object> responseEntity = ResponseEntity.ok(accounts);
+
+        when(commonHelper.calcRequestBuilder(any(HttpMethod.class), eq(MaUrl.ACCOUNTS), eq(null), eq("true"))).thenReturn(responseEntity);
+
+        List<MyConsultCopartisDocuments> expectedDocuments = List.of(new MyConsultCopartisDocuments(), new MyConsultCopartisDocuments());
+        when(asterionDocsService.search(accounts, libelleug3, companyCode)).thenReturn(expectedDocuments);
+
+        // Act
+        List<MyConsultCopartisDocuments> result = defaultDocumentService.search(libelleug3, companyCode);
+
+        // Assert
+        assertEquals(expectedDocuments, result);
+    }
+}
 
 
 
