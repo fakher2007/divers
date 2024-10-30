@@ -1,0 +1,25 @@
+import java.lang.reflect.Method;
+
+public class ReflectionExample {
+    public static void main(String[] args) {
+        try {
+            // Create an instance of the class containing searchMw
+            Class<?> clazz = NickelDocumentService.class; // Replace with actual class name if different
+            Object instance = clazz.getDeclaredConstructor().newInstance();
+
+            // Get the searchMw method
+            Method searchMwMethod = clazz.getDeclaredMethod("searchMw", String.class, String.class, String.class, boolean.class);
+            
+            // Set accessible to true to bypass protected access
+            searchMwMethod.setAccessible(true);
+
+            // Invoke the method with parameters
+            Object response = searchMwMethod.invoke(instance, "linkIdValue", "userRoleValue", "companyCodeValue", true);
+
+            // Print the response
+            System.out.println(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
