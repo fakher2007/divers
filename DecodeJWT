@@ -1,0 +1,51 @@
+ import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.HttpServletRequest;
+
+public class TokenUtils {
+
+    private static final String BEARER_PREFIX = "Bearer ";
+    
+    public static String getSubIfSidIsSso(HttpServletRequest request) {
+        String token = extractToken(request);
+        
+        if (token == null) {
+            return null;
+        }
+        
+        DecodedJWT jwt = decodeToken(token);
+        
+        if (jwt != null && isSidSso(jwt)) {
+            return getClaim(jwt, "sub");
+        }
+        
+        return null;
+    }
+
+    private static String extractToken(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader("Authorization");
+        
+        if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {
+            return authorizationHeader.substring(BEARER_PREFIX.length());
+        }
+        
+        return null;
+    }
+
+    private static DecodedJWT decodeToken(String token) {
+        try {
+            return JWT.decode(token);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static boolean isSidSso(DecodedJWT jwt) {
+        return "sso".equals(getClaim(jwt, "sid"));
+    }
+
+    private static String getClaim(DecodedJWT jwt, String claimName) {
+        return jwt.getClaim(claimName).asString();
+    }
+}
