@@ -1,64 +1,83 @@
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.extension.ExtendWith;
+ import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
-import java.util.Base64;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
 class TokenProviderTest {
+
+    @Mock
+    private SecretKey secretKey;
 
     @InjectMocks
     private TokenProvider tokenProvider;
 
-    @Mock
-    private Key secretKey;
-
-    @DisplayName("getValueFromToken should return expected results based on token, key, and sso flag")
-    @ParameterizedTest
-    @CsvSource({
-        "'', 'key', true, Optional.empty()",                     // Empty token
-        "'', 'key', false, Optional.empty()",                    // Empty token
-        "'validToken', 'key', false, Optional.of('value')",      // Non-empty token, non-SSO
-        "'validToken', 'key', true, Optional.of('value')",       // Non-empty token, SSO, sid matches
-        "'validToken', 'key', true, Optional.empty()"            // Non-empty token, SSO, sid does not match
-    })
-    void testGetValueFromToken(String token, String key, boolean sso, Optional<String> expected) {
-        // Configure a mock secret key
-        byte[] keyBytes = Base64.getDecoder().decode("YourBase64EncodedSecretKey==");
-        when(secretKey.getEncoded()).thenReturn(keyBytes);
-        
-        // Generate a signed token based on the sso flag and expected sid value
-        String generatedToken = createToken(key, "value", sso ? "SSO" : "OTHER");
-
-        // Call the method under test
-        Optional<String> result = tokenProvider.getValueFromToken(generatedToken, key, sso);
-
-        // Assert the expected outcome
-        assertEquals(expected, result);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
-    // Helper method to create a signed JWT token with claims
-    private String createToken(String key, String value, String sid) {
-        Claims claims = Jwts.claims().setSubject("test");
-        claims.put(key, value);
-        claims.put("sid", sid);
+    @Test
+    void testGetValueFromToken_EmptyToken() {
+        Optional<String> result = tokenProvider.getValueFromToken("", "key", false);
+        assertEquals(Optional.empty(), result);
+    }
 
-        return Jwts.builder()
-                .setClaims(claims)
-                .signWith(new SecretKeySpec(secretKey.getEncoded(), SignatureAlgorithm.HS256.getJcaName()))
-                .compact();
+    @ParameterizedTest
+    @MethodSource("provideArgumentsForGetValueFromToken")
+    void testGetValueFromToken(String token, String key, boolean sso, String expectedValue) {
+        // Mock the getClaims method
+        when(tokenProvider.getClaims(token, "sid")).thenReturn("SSO");
+        when(tokenProvider.getClaims(token, key)).thenReturn(expectedValue);
+
+        Optional<String> result = tokenProvider.getValueFromToken(token, key, sso);
+
+        assertEquals(Optional.of(expectedValue), result);
+    }
+
+    private static Stream<Arguments> provideArgumentsForGetValueFromToken() {
+        return Stream.of(
+            Arguments.of("validToken", "key", false, "value"),
+            Arguments.of("validToken", "key", true, "value")
+        );
+    }
+
+    @Test
+    void testGetValueFromToken_SSO_InvalidSid() {
+        String token = "validToken";
+        String key = "key";
+        boolean sso = true;
+
+        // Mock the getClaims method to return an invalid sid
+        when(tokenProvider.getClaims(token, "sid")).thenReturn("INVALID");
+
+        Optional<String> result = tokenProvider.getValueFromToken(token, key, sso);
+
+        assertEquals(Optional.empty(), result);
+    }
+
+    @Test
+    void testGetValueFromToken_SSO_EmptySid() {
+        String token = "validToken";
+        String key = "key";
+        boolean sso = true;
+
+        // Mock the getClaims method to return an empty sid
+        when(tokenProvider.getClaims(token, "sid")).thenReturn("");
+
+        Optional<String> result = tokenProvider.getValueFromToken(token, key, sso);
+
+        assertEquals(Optional.empty(), result);
     }
 }
