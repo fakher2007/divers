@@ -1,0 +1,57 @@
+ import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Key;
+import java.util.Base64;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class TokenServiceTest {
+
+    private final TokenService tokenService = new TokenService();
+    private final Key secretKey;
+
+    public TokenServiceTest() {
+        // Generate a secret key using SecretKeySpec with a base64-encoded string
+        byte[] keyBytes = Base64.getDecoder().decode("YourBase64EncodedSecretKey==");
+        this.secretKey = new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
+    }
+
+    @DisplayName("getValueFromToken should return expected results based on token, key, and sso flag")
+    @ParameterizedTest
+    @CsvSource({
+        "'', 'key', true, Optional.empty()",                     // Empty token
+        "'', 'key', false, Optional.empty()",                    // Empty token
+        "'validToken', 'key', false, Optional.of('value')",      // Non-empty token, non-SSO
+        "'validToken', 'key', true, Optional.of('value')",       // Non-empty token, SSO, sid matches
+        "'validToken', 'key', true, Optional.empty()"            // Non-empty token, SSO, sid does not match
+    })
+    void testGetValueFromToken(String token, String key, boolean sso, Optional<String> expected) {
+        // Create a signed token based on the sso flag and expected sid value
+        String generatedToken = createToken(key, "value", sso ? "SSO" : "OTHER");
+
+        // Call the method under test
+        Optional<String> result = tokenService.getValueFromToken(generatedToken, key, sso);
+
+        // Assert the expected outcome
+        assertEquals(expected, result);
+    }
+
+    // Helper method to create a signed JWT token with claims
+    private String createToken(String key, String value, String sid) {
+        Claims claims = Jwts.claims().setSubject("test");
+        claims.put(key, value);
+        claims.put("sid", sid);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .signWith(secretKey)
+                .compact();
+    }
+}
