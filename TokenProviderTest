@@ -28,11 +28,13 @@ class TokenProviderTest {
     @InjectMocks
     private TokenProvider tokenProvider;
 
+    private SecretKey validSecretKey;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         // Initialize the secretKey with a valid key for HS512
-        secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        validSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 
     @Test
@@ -88,10 +90,19 @@ class TokenProviderTest {
         assertEquals(Optional.empty(), result);
     }
 
+    // Helper method to generate a valid JWT token
+    private String generateValidJwtToken() {
+        return Jwts.builder()
+                .claim("sid", "SSO")
+                .claim("key", "value")
+                .signWith(validSecretKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
     // Mock implementation of getClaims method
     public String getClaims(String token, String key) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+                .setSigningKey(validSecretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
