@@ -1,0 +1,139 @@
+
+public interface CreditCardLimitIncreaseStep {
+void execute(Integer expectedLimit);
+void setNextStep(CreditCardLimitIncreaseStep step);
+}
+
+@Service
+@Order(1)
+@Slf4j
+public class ManagerOneStep implements CreditCardLimitIncreaseStep{
+
+private CreditCardLimitIncreaseStep nextStep;
+
+@Override
+public void execute(Integer expectedLimit) {
+if (expectedLimit > 5000 && nextStep != null) {
+nextStep.execute(expectedLimit);
+} else {
+log.info("Credit card limit increased by Manager One");
+}
+}
+
+@Override
+public void setNextStep(CreditCardLimitIncreaseStep step) {
+this.nextStep = step;
+}
+}
+
+@Service
+@Order(2)
+@Slf4j
+public class ManagerTwoStep implements CreditCardLimitIncreaseStep {
+private CreditCardLimitIncreaseStep nextStep;
+
+@Override
+public void execute(Integer expectedLimit) {
+if (expectedLimit > 10000 && nextStep != null) {
+nextStep.execute(expectedLimit);
+} else {
+log.info("Credit card limit increased by Manager Two");
+}
+}
+
+@Override
+public void setNextStep(CreditCardLimitIncreaseStep step) {
+this.nextStep = step;
+}
+}
+
+@Service
+@Order(3)
+@Slf4j
+public class ManagerThreeStep implements CreditCardLimitIncreaseStep{
+    private CreditCardLimitIncreaseStep nextStep;
+
+    @Override
+    public void execute(Integer expectedLimit) {
+        if (expectedLimit > 20000 && nextStep != null) {
+            nextStep.execute(expectedLimit);
+        } else {
+            log.info("Credit card limit increased by Manager Three");
+        }
+    }
+
+    @Override
+    public void setNextStep(CreditCardLimitIncreaseStep step) {
+        this.nextStep = step;
+    }
+}
+
+@Service
+public class CreditCardLimitIncreaseFacade {
+
+    private CreditCardLimitIncreaseStep firstStep;
+
+    public CreditCardLimitIncreaseFacade(List<CreditCardLimitIncreaseStep> steps) {
+        firstStep = steps.get(0);
+        for (int i = 0; i < steps.size(); i++) {
+            var current = steps.get(i);
+            var next = i < steps.size() - 1 ? steps.get(i + 1) : null;
+            current.setNextStep(next);
+        }
+    }
+
+    public void increaseCreditCardLimit(Integer expectedLimit) {
+        firstStep.execute(expectedLimit);
+    }
+}
+----------------
+refactored version
+-------------------
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class CreditCardLimitIncreaseFacade {
+
+    private final CreditCardLimitIncreaseStep firstStep;
+
+    @Autowired
+    public CreditCardLimitIncreaseFacade(List<CreditCardLimitIncreaseStep> steps) {
+        if (steps.isEmpty()) {
+            throw new IllegalArgumentException("At least one step is required");
+        }
+
+        firstStep = steps.get(0);
+
+        List<CreditCardLimitIncreaseStep> stepList = steps.stream()
+            .collect(Collectors.toList());
+
+        for (int i = 0; i < stepList.size() - 1; i++) {
+            stepList.get(i).setNextStep(Optional.of(stepList.get(i + 1)));
+        }
+    }
+
+    public void increaseCreditCardLimit(Integer expectedLimit) {
+        firstStep.execute(expectedLimit);
+    }
+}
+
+@RestController
+@RequiredArgsConstructor
+public class CreditCardController {
+
+private final CreditCardLimitIncreaseFacade creditCardLimitFacade;
+
+@GetMapping
+public ResponseEntity<Boolean> increaseCreditCardLimit(){
+creditCardLimitFacade.increaseCreditCardLimit(10000);
+return new ResponseEntity<>(true, HttpStatus.CREATED);
+}
+}
+
+
