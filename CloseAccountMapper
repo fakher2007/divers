@@ -1,4 +1,4 @@
-⁹import org.mapstruct.Mapper;
+9⁹import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
@@ -127,11 +127,12 @@ unit tests
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class FlatXMLAdapterWithFieldTransformationTest {
 
     private FlatXMLAdapterWithFieldTransformation adapter;
@@ -199,9 +200,6 @@ class FlatXMLAdapterWithFieldTransformationTest {
         }
     }
 }
-
-
-
 
 
 
