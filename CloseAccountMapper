@@ -42,3 +42,77 @@ public class Main {
         System.out.println(closeAccount);
     }
 }
+‐------------
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+
+public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
+
+    @Override
+    public String convertToXML(Object object) {
+        if (object == null) {
+            throw new IllegalArgumentException("Object cannot be null");
+        }
+
+        try {
+            Document document = createDocument();
+            processFields(document, object);
+            return documentToString(document);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating flat XML with field transformation", e);
+        }
+    }
+
+    private Document createDocument() throws ParserConfigurationException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        return builder.newDocument();
+    }
+
+    private void processFields(Document document, Object object) throws IllegalAccessException {
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            Object fieldValue = field.get(object);
+            String transformedName = toSnakeCase(fieldName);
+
+            Element fieldElement = document.createElement(transformedName);
+            fieldElement.appendChild(document.createTextNode(fieldValue != null ? fieldValue.toString() : "null"));
+            document.appendChild(fieldElement);
+        }
+    }
+
+    private String documentToString(Document document) throws TransformerException {
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        DOMSource source = new DOMSource(document);
+        StringWriter writer = new StringWriter();
+        StreamResult result = new StreamResult(writer);
+        transformer.transform(source, result);
+        return writer.toString();
+    }
+
+    private String toSnakeCase(String fieldName) {
+        StringBuilder result = new StringBuilder();
+        for (char c : fieldName.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                result.append("_").append(c);
+            } else {
+                result.append(Character.toUpperCase(c));
+            }
+        }
+        return result.toString();
+    }
+}
