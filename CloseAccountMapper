@@ -231,7 +231,7 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
             document.appendChild(rootElement); // Append the root element to the document
 
             processFields(document, rootElement, object);
-            return documentToStringWithoutRoot(document, rootElement);
+            return documentToStringWithoutRoot(rootElement);
         } catch (Exception e) {
             throw new RuntimeException("Error generating flat XML with field transformation", e);
         }
@@ -257,13 +257,13 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
         }
     }
 
-    private String documentToStringWithoutRoot(Document document, Element rootElement) throws TransformerException {
+    private String documentToStringWithoutRoot(Element rootElement) throws TransformerException {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         DOMSource source = new DOMSource(rootElement); // Transform only the root element and its children
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
         transformer.transform(source, result);
-        return writer.toString();
+        return writer.toString().replace("<root>", "").replace("</root>", ""); // Remove the root tag
     }
 
     private String toSnakeCase(String fieldName) {
@@ -356,4 +356,3 @@ class FlatXMLAdapterWithFieldTransformationTest {
     }
 }
 
-        
