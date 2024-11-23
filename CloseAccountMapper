@@ -103,6 +103,13 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
         transformer.transform(source, result);
         return writer.toString();
     }
+----------
+public interface XMLAdapter {
+    String convertToXML(Object object);
+}
+
+
+
 
     private String toSnakeCase(String fieldName) {
         StringBuilder result = new StringBuilder();
