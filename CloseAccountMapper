@@ -259,6 +259,7 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
 
     private String documentToStringWithoutRoot(Element rootElement) throws TransformerException {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes"); // Omit XML declaration
         DOMSource source = new DOMSource(rootElement); // Transform only the root element and its children
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
@@ -278,7 +279,6 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
         return result.toString();
     }
 }
-
 -- unit tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
