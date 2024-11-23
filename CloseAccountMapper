@@ -122,6 +122,86 @@ public interface XMLAdapter {
     String convertToXML(Object object);
 }
 
+‐------------
+unit tests
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest
+class FlatXMLAdapterWithFieldTransformationTest {
+
+    private FlatXMLAdapterWithFieldTransformation adapter;
+
+    @BeforeEach
+    void setUp() {
+        adapter = new FlatXMLAdapterWithFieldTransformation();
+    }
+
+    @Test
+    void testConvertToXML_NullObject_ThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            adapter.convertToXML(null);
+        });
+    }
+
+    @Test
+    void testConvertToXML_ValidObject_ReturnsCorrectXML() {
+        // Arrange
+        TestObject testObject = new TestObject("John", 30, "Developer");
+
+        // Act
+        String xml = adapter.convertToXML(testObject);
+
+        // Assert
+        String expectedXml = "<FIRST_NAME>John</FIRST_NAME><AGE>30</AGE><JOB_TITLE>Developer</JOB_TITLE>";
+        assertTrue(xml.contains(expectedXml));
+    }
+
+    @Test
+    void testConvertToXML_ObjectWithNullFields_ReturnsCorrectXML() {
+        // Arrange
+        TestObject testObject = new TestObject(null, 0, null);
+
+        // Act
+        String xml = adapter.convertToXML(testObject);
+
+        // Assert
+        String expectedXml = "<FIRST_NAME>null</FIRST_NAME><AGE>0</AGE><JOB_TITLE>null</JOB_TITLE>";
+        assertTrue(xml.contains(expectedXml));
+    }
+
+    // Helper class for testing
+    private static class TestObject {
+        private String firstName;
+        private int age;
+        private String jobTitle;
+
+        public TestObject(String firstName, int age, String jobTitle) {
+            this.firstName = firstName;
+            this.age = age;
+            this.jobTitle = jobTitle;
+        }
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public String getJobTitle() {
+            return jobTitle;
+        }
+    }
+}
+
+
+
 
 
 
