@@ -1,0 +1,20 @@
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+@Mapper(componentModel = "spring") // Use "default" if not integrating with Spring
+public interface CloseAccountMapper {
+
+    CloseAccountMapper INSTANCE = Mappers.getMapper(CloseAccountMapper.class);
+
+    @Mapping(source = "civility", target = "civilite")
+    @Mapping(source = "firstName", target = "prenom")
+    @Mapping(source = "lastName", target = "nom")
+    @Mapping(source = "clientId", target = "numPersonne")
+    @Mapping(source = "email", target = "email")
+    @Mapping(source = "object", target = "object")
+    @Mapping(source = "message", target = "message")
+    @Mapping(source = "accountId", target = "numCompte")
+    @Mapping(target = "idFormulaire", constant = "PRIVE_CLIENT") // Static value
+    CloseAccount toCloseAccount(CloseAccountRequest request);
+}
