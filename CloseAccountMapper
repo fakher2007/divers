@@ -18,3 +18,27 @@ public interface CloseAccountMapper {
     @Mapping(target = "idFormulaire", constant = "PRIVE_CLIENT") // Static value
     CloseAccount toCloseAccount(CloseAccountRequest request);
 }
+-------
+public class Main {
+    public static void main(String[] args) {
+        CloseAccountMapper mapper = CloseAccountMapper.INSTANCE;
+
+        // Create CloseAccountRequest object
+        CloseAccountRequest request = CloseAccountRequest.builder()
+            .civility("Mr.")
+            .firstName("John")
+            .lastName("Doe")
+            .clientId("12345")
+            .email("john.doe@example.com")
+            .object("Account Closure")
+            .message("Please close my account.")
+            .accountId("67890")
+            .build();
+
+        // Map to CloseAccount
+        CloseAccount closeAccount = mapper.toCloseAccount(request);
+
+        // Print the mapped CloseAccount object
+        System.out.println(closeAccount);
+    }
+}
