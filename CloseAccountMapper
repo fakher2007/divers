@@ -355,4 +355,131 @@ class FlatXMLAdapterWithFieldTransformationTest {
         }
     }
 }
+----------
+refacto
+---------
+import java.lang.reflect.Field;
+
+public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
+
+    @Override
+    public String convertToXML(Object object) {
+        if (object == null) {
+            throw new IllegalArgumentException("Object cannot be null");
+        }
+
+        try {
+            StringBuilder xmlBuilder = new StringBuilder();
+            processFields(xmlBuilder, object);
+            return xmlBuilder.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating flat XML with field transformation", e);
+        }
+    }
+
+    private void processFields(StringBuilder xmlBuilder, Object object) throws IllegalAccessException {
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            Object fieldValue = field.get(object);
+            String transformedName = toSnakeCase(fieldName);
+
+            xmlBuilder.append('<').append(transformedName).append('>');
+            xmlBuilder.append(fieldValue != null ? fieldValue.toString() : "null");
+            xmlBuilder.append("</").append(transformedName).append('>');
+        }
+    }
+
+    private String toSnakeCase(String fieldName) {
+        StringBuilder result = new StringBuilder();
+        for (char c : fieldName.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                result.append("_").append(c);
+            } else {
+                result.append(Character.toUpperCase(c));
+            }
+        }
+        return result.toString();
+    }
+}
+
+-- unit tests
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+class FlatXMLAdapterWithFieldTransformationTest {
+
+    private FlatXMLAdapterWithFieldTransformation adapter;
+
+    @BeforeEach
+    void setUp() {
+        adapter = new FlatXMLAdapterWithFieldTransformation();
+    }
+
+    @Test
+    void testConvertToXML_NullObject_ThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            adapter.convertToXML(null);
+        });
+    }
+
+    @Test
+    void testConvertToXML_ValidObject_ReturnsCorrectXML() {
+        // Arrange
+        TestObject testObject = new TestObject("John", 30, "Developer");
+
+        // Act
+        String xml = adapter.convertToXML(testObject);
+
+        // Assert
+        String expectedXml = "<FIRST_NAME>John</FIRST_NAME><AGE>30</AGE><JOB_TITLE>Developer</JOB_TITLE>";
+        assertEquals(expectedXml, xml);
+    }
+
+    @Test
+    void testConvertToXML_ObjectWithNullFields_ReturnsCorrectXML() {
+        // Arrange
+        TestObject testObject = new TestObject(null, 0, null);
+
+        // Act
+        String xml = adapter.convertToXML(testObject);
+
+        // Assert
+        String expectedXml = "<FIRST_NAME>null</FIRST_NAME><AGE>0</AGE><JOB_TITLE>null</JOB_TITLE>";
+        assertEquals(expectedXml, xml);
+    }
+
+    // Helper class for testing
+    private static class TestObject {
+        private String firstName;
+        private int age;
+        private String jobTitle;
+
+        public TestObject(String firstName, int age, String jobTitle) {
+            this.firstName = firstName;
+            this.age = age;
+            this.jobTitle = jobTitle;
+        }
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public String getJobTitle() {
+            return jobTitle;
+        }
+    }
+}
+
+
 
