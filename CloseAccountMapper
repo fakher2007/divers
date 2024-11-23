@@ -203,7 +203,6 @@ class FlatXMLAdapterWithFieldTransformationTest {
 ------------
 fix the above version
 --------------
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -228,8 +227,11 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
 
         try {
             Document document = createDocument();
-            processFields(document, object);
-            return documentToString(document);
+            Element rootElement = document.createElement("root"); // Create a temporary root element
+            document.appendChild(rootElement); // Append the root element to the document
+
+            processFields(document, rootElement, object);
+            return documentToStringWithoutRoot(document, rootElement);
         } catch (Exception e) {
             throw new RuntimeException("Error generating flat XML with field transformation", e);
         }
@@ -241,7 +243,7 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
         return builder.newDocument();
     }
 
-    private void processFields(Document document, Object object) throws IllegalAccessException {
+    private void processFields(Document document, Element rootElement, Object object) throws IllegalAccessException {
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
@@ -251,13 +253,13 @@ public class FlatXMLAdapterWithFieldTransformation implements XMLAdapter {
 
             Element fieldElement = document.createElement(transformedName);
             fieldElement.appendChild(document.createTextNode(fieldValue != null ? fieldValue.toString() : "null"));
-            document.appendChild(fieldElement);
+            rootElement.appendChild(fieldElement); // Append field elements to the root element
         }
     }
 
-    private String documentToString(Document document) throws TransformerException {
+    private String documentToStringWithoutRoot(Document document, Element rootElement) throws TransformerException {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        DOMSource source = new DOMSource(document);
+        DOMSource source = new DOMSource(rootElement); // Transform only the root element and its children
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
         transformer.transform(source, result);
@@ -312,7 +314,7 @@ class FlatXMLAdapterWithFieldTransformationTest {
 
         // Assert
         String expectedXml = "<FIRST_NAME>John</FIRST_NAME><AGE>30</AGE><JOB_TITLE>Developer</JOB_TITLE>";
-        assertTrue(xml.contains(expectedXml));
+        assertEquals(expectedXml, xml.trim());
     }
 
     @Test
@@ -325,7 +327,7 @@ class FlatXMLAdapterWithFieldTransformationTest {
 
         // Assert
         String expectedXml = "<FIRST_NAME>null</FIRST_NAME><AGE>0</AGE><JOB_TITLE>null</JOB_TITLE>";
-        assertTrue(xml.contains(expectedXml));
+        assertEquals(expectedXml, xml.trim());
     }
 
     // Helper class for testing
@@ -354,7 +356,4 @@ class FlatXMLAdapterWithFieldTransformationTest {
     }
 }
 
-
-
-
-    
+        
