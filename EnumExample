@@ -1,0 +1,29 @@
+import java.util.EnumSet;
+
+public class EnumValidationExample {
+    public static void main(String[] args) {
+        String input = "PENDING";
+        System.out.println(input + (OrderStatus.isValidStatus(input) ? " is a valid status." : " is not a valid status."));
+
+        // Example with invalid input
+        input = "INVALID_STATUS";
+        System.out.println(input + (OrderStatus.isValidStatus(input) ? " is a valid status." : " is not a valid status."));
+    }
+
+    public enum OrderStatus {
+        PENDING,
+        COMPLETED,
+        CANCELLED;
+
+        private static final EnumSet<OrderStatus> ALL_STATUSES = EnumSet.allOf(OrderStatus.class);
+
+        public static boolean isValidStatus(String status) {
+            try {
+                OrderStatus.valueOf(status);
+                return true;
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
+        }
+    }
+}
