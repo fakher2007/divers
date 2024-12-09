@@ -278,4 +278,137 @@ public class AccountUtilsTest {
         accountUtils.checkTotalFileSize(attachments);
     }
 }
+---------
+v3
+---------
+import fr.copartis.api.model.ApiStatusCodes;
+import fr.copartis.api.model.ApiStatusException;
+import fr.copartis.api.model.upsideo.Attachment;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Optional;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class AccountUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccountUtils.class);
+
+    private static final int UPLOAD_FILE_MAX_SIZE = Integer.parseInt(System.getenv("UPLOAD_FILE_MAX_SIZE") != null ? System.getenv("UPLOAD_FILE_MAX_SIZE") : "5"); // in MB
+    private static final int UPLOAD_FILE_MAX_NUMBER = Integer.parseInt(System.getenv("UPLOAD_FILE_MAX_NUMBER") != null ? System.getenv("UPLOAD_FILE_MAX_NUMBER") : "4");
+
+    private static final int BYTES_IN_MB = 1024 * 1024;
+
+    public static void checkFileSize(List<Attachment> attachments) throws ApiStatusException {
+        checkFileCount(attachments);
+        checkTotalFileSize(attachments);
+    }
+
+    private static void checkFileCount(List<Attachment> attachments) throws ApiStatusException {
+        Optional.ofNullable(attachments)
+                .filter(list -> !list.isEmpty())
+                .orElseThrow(() -> {
+                    LOGGER.error("Attachments list is null or empty");
+                    return new ApiStatusException(ApiStatusCodes.PJ_NOT_ADDED);
+                });
+
+        if (attachments.size() > UPLOAD_FILE_MAX_NUMBER) {
+            LOGGER.error("Number of attachments exceeds the maximum allowed: {}", UPLOAD_FILE_MAX_NUMBER);
+            throw new ApiStatusException(ApiStatusCodes.PJ_NOT_ADDED);
+        }
+    }
+
+    private static void checkTotalFileSize(List<Attachment> attachments) throws ApiStatusException {
+        double totalSizeInBytes = attachments.stream()
+                                             .mapToDouble(attachment -> attachment.getBase64datas().length)
+                                             .sum();
+
+        double sizeInMb = totalSizeInBytes / BYTES_IN_MB;
+
+        if (sizeInMb >= UPLOAD_FILE_MAX_SIZE) {
+            LOGGER.error("Total file size exceeds the maximum allowed: {} MB", UPLOAD_FILE_MAX_SIZE);
+            throw new ApiStatusException(ApiStatusCodes.MAX_FILE_SIZE);
+        }
+    }
+}
+------
+unit tests v3
+------
+import fr.copartis.api.model.ApiStatusCodes;
+import fr.copartis.api.model.ApiStatusException;
+import fr.copartis.api.model.upsideo.Attachment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class AccountUtilsTest {
+
+    @Mock
+    private Attachment attachment;
+
+    @BeforeEach
+    public void setUp() {
+        // Mock the environment variables
+        when(attachment.getBase64datas()).thenReturn("base64data".getBytes());
+    }
+
+    @Test
+    public void testCheckFileCount_NullAttachments() {
+        assertThatThrownBy(() -> AccountUtils.checkFileCount(null))
+                .isInstanceOf(ApiStatusException.class)
+                .hasFieldOrPropertyWithValue("code", ApiStatusCodes.PJ_NOT_ADDED);
+    }
+
+    @Test
+    public void testCheckFileCount_EmptyAttachments() {
+        assertThatThrownBy(() -> AccountUtils.checkFileCount(Collections.emptyList()))
+                .isInstanceOf(ApiStatusException.class)
+                .hasFieldOrPropertyWithValue("code", ApiStatusCodes.PJ_NOT_ADDED);
+    }
+
+    @Test
+    public void testCheckFileCount_ExceedMaxNumber() {
+        List<Attachment> attachments = Arrays.asList(new Attachment(), new Attachment(), new Attachment(), new Attachment(), new Attachment());
+        assertThatThrownBy(() -> AccountUtils.checkFileCount(attachments))
+                .isInstanceOf(ApiStatusException.class)
+                .hasFieldOrPropertyWithValue("code", ApiStatusCodes.PJ_NOT_ADDED);
+    }
+
+    @Test
+    public void testCheckTotalFileSize_ExceedMaxSize() {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment("base64data1".getBytes()),
+                new Attachment("base64data2".getBytes()),
+                new Attachment("base64data3".getBytes()),
+                new Attachment("base64data4".getBytes()),
+                new Attachment("base64data5".getBytes())
+        );
+        assertThatThrownBy(() -> AccountUtils.checkTotalFileSize(attachments))
+                .isInstanceOf(ApiStatusException.class)
+                .hasFieldOrPropertyWithValue("code", ApiStatusCodes.MAX_FILE_SIZE);
+    }
+
+    @Test
+    public void testCheckTotalFileSize_WithinMaxSize() {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment("base64data1".getBytes()),
+                new Attachment("base64data2".getBytes())
+        );
+        // This should not throw an exception
+        AccountUtils.checkTotalFileSize(attachments);
+    }
+}
 
