@@ -1,4 +1,4 @@
-import fr.copartis.api.model.ApiStatusCodes;
+8import fr.copartis.api.model.ApiStatusCodes;
 import fr.copartis.api.model.ApiStatusException;
 import fr.copartis.api.model.upsideo.Attachment;
 import lombok.AccessLevel;
@@ -411,4 +411,46 @@ public class AccountUtilsTest {
         AccountUtils.checkTotalFileSize(attachments);
     }
 }
+-----
+unit test 4
+-------
+import fr.copartis.api.model.ApiStatusCodes;
+import fr.copartis.api.model.ApiStatusException;
+import fr.copartis.api.model.upsideo.Attachment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class AccountUtilsTest {
+
+    @Mock
+    private Attachment attachment;
+
+    @BeforeEach
+    public void setUp() {
+        // Mock the environment variables
+        when(attachment.getBase64datas()).thenReturn("base64data".getBytes());
+    }
+
+    @Test
+    public void testCheckFileCount_NullAttachments() {
+        assertThatThrownBy(() -> AccountUtils.checkFileCount(null))
+                .isInstanceOf(ApiStatusException.class)
+                .hasFieldOrPropertyWithValue("code", ApiStatusCodes.PJ_NOT_ADDED);
+    }
+
+    @Test
+    public void testCheckFileCount_EmptyAttachments() {
+        assertThatThrownBy(() -> AccountUtils.checkFileCount(Collections.emptyList()))
+                .isInstanceOf(ApiStatusException.class)
 
