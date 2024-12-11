@@ -1,0 +1,35 @@
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.Mockito;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+class DefaultPassbookAccountInfoTest {
+
+    private final CalcapProcessor calcapProcessor = Mockito.mock(CalcapProcessor.class);
+    private final DefaultPassbookAccountInfo defaultPassbookAccountInfo = new DefaultPassbookAccountInfo(calcapProcessor);
+
+    @ParameterizedTest
+    @EnumSource(
+        value = CaseTypeEnum.class,
+        names = { "ASK_FOR_INFORMATION_FORM", "DISCONTENT_FORM", "TAX_EXAMPTION_FORM" },
+        mode = EnumSource.Mode.INCLUDE
+    )
+    void testSendClientForm(CaseTypeEnum caseType) throws ApiStatusException {
+        // Arrange
+        var caseAccountRequest = new CaseAccountRequest(caseType.name(), "test send form", "123", null);
+        ResponseEntity<Object> expectedResponse = new ResponseEntity<>(HttpStatus.OK);
+
+        when(calcapProcessor.calcap(caseAccountRequest)).thenReturn(expectedResponse);
+
+        // Act
+        ResponseEntity<Object> actualResponse = defaultPassbookAccountInfo.sendClientForm(caseAccountRequest);
+
+        // Assert
+        assertEquals(expectedResponse, actualResponse);
+        verify(calcapProcessor, times(1)).calcap(caseAccountRequest);
+    }
+}
