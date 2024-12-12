@@ -453,4 +453,134 @@ public class AccountUtilsTest {
     public void testCheckFileCount_EmptyAttachments() {
         assertThatThrownBy(() -> AccountUtils.checkFileCount(Collections.emptyList()))
                 .isInstanceOf(ApiStatusException.class)
+--------
+test v2
+---------
+package fr.copartis.api.model.upsideo;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@SpringBootTest
+@ExtendWith(MockitoExtension.class)
+class AccountUtilsTest {
+
+    private static final int UPLOAD_FILE_MAX_SIZE = 5; // in MB
+    private static final int UPLOAD_FILE_MAX_NUMBER = 4;
+    private static final int BYTES_IN_MB = 1024 * 1024;
+
+    @BeforeEach
+    void setUp() {
+        // Any setup code if needed
+    }
+
+    @Test
+    void testCheckFileCount_Success() throws ApiStatusException {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file1.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file2.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file3.pdf")
+        );
+
+        AccountUtils.checkFileCount(attachments);
+    }
+
+    @Test
+    void testCheckFileCount_NullAttachments() {
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.checkFileCount(null);
+        });
+    }
+
+    @Test
+    void testCheckFileCount_EmptyAttachments() {
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.checkFileCount(Collections.emptyList());
+        });
+    }
+
+    @Test
+    void testCheckFileCount_ExceedsMaxNumber() {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file1.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file2.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file3.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file4.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file5.pdf")
+        );
+
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.checkFileCount(attachments);
+        });
+    }
+
+    @Test
+    void testCheckTotalSize_Success() throws ApiStatusException {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file1.pdf"), // 0.5 MB
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file2.pdf")  // 0.5 MB
+        );
+
+        AccountUtils.checkTotalSize(attachments);
+    }
+
+    @Test
+    void testCheckTotalSize_ExceedsMaxSize() {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB * 3], "pdf", "file1.pdf"), // 3 MB
+                new Attachment(new byte[BYTES_IN_MB * 3], "pdf", "file2.pdf")  // 3 MB
+        );
+
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.checkTotalSize(attachments);
+        });
+    }
+
+    @Test
+    void testCheck_Success() throws ApiStatusException {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file1.pdf"), // 0.5 MB
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file2.pdf")  // 0.5 MB
+        );
+
+        AccountUtils.check(attachments);
+    }
+
+    @Test
+    void testCheck_ExceedsMaxNumber() {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file1.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file2.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file3.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file4.pdf"),
+                new Attachment(new byte[BYTES_IN_MB / 2], "pdf", "file5.pdf")
+        );
+
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.check(attachments);
+        });
+    }
+
+    @Test
+    void testCheck_ExceedsMaxSize() {
+        List<Attachment> attachments = Arrays.asList(
+                new Attachment(new byte[BYTES_IN_MB * 3], "pdf", "file1.pdf"), // 3 MB
+                new Attachment(new byte[BYTES_IN_MB * 3], "pdf", "file2.pdf")  // 3 MB
+        );
+
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.check(attachments);
+        });
+    }
+}
 
