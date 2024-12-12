@@ -1,4 +1,4 @@
-8import fr.copartis.api.model.ApiStatusCodes;
+import fr.copartis.api.model.ApiStatusCodes;
 import fr.copartis.api.model.ApiStatusException;
 import fr.copartis.api.model.upsideo.Attachment;
 import lombok.AccessLevel;
@@ -583,4 +583,97 @@ class AccountUtilsTest {
         });
     }
 }
+-------
+tests v3
+--------
+package fr.copartis.api.model.upsideo;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@SpringBootTest
+@ExtendWith(MockitoExtension.class)
+class AccountUtilsTest {
+
+    private static final int UPLOAD_FILE_MAX_SIZE = 5; // in MB
+    private static final int UPLOAD_FILE_MAX_NUMBER = 4;
+    private static final int BYTES_IN_MB = 1024 * 1024;
+
+    @BeforeEach
+    void setUp() {
+        // Any setup code if needed
+    }
+
+    @Test
+    void testCheck_Success() throws ApiStatusException {
+        // Create attachments with valid size and count
+        List<Attachment> attachments = Arrays.asList(
+                createAttachment(BYTES_IN_MB / 2), // 0.5 MB
+                createAttachment(BYTES_IN_MB / 2)  // 0.5 MB
+        );
+
+        // Call the public method
+        AccountUtils.check(attachments);
+    }
+
+    @Test
+    void testCheck_NullAttachments() {
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.check(null);
+        });
+    }
+
+    @Test
+    void testCheck_EmptyAttachments() {
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.check(Collections.emptyList());
+        });
+    }
+
+    @Test
+    void testCheck_ExceedsMaxNumber() {
+        // Create attachments exceeding the max number
+        List<Attachment> attachments = Arrays.asList(
+                createAttachment(BYTES_IN_MB / 2),
+                createAttachment(BYTES_IN_MB / 2),
+                createAttachment(BYTES_IN_MB / 2),
+                createAttachment(BYTES_IN_MB / 2),
+                createAttachment(BYTES_IN_MB / 2)
+        );
+
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.check(attachments);
+        });
+    }
+
+    @Test
+    void testCheck_ExceedsMaxSize() {
+        // Create attachments exceeding the max size
+        List<Attachment> attachments = Arrays.asList(
+                createAttachment(BYTES_IN_MB * 3), // 3 MB
+                createAttachment(BYTES_IN_MB * 3)  // 3 MB
+        );
+
+        assertThrows(ApiStatusException.class, () -> {
+            AccountUtils.check(attachments);
+        });
+    }
+
+    // Helper method to create an Attachment object
+    private Attachment createAttachment(int sizeInBytes) {
+        Attachment attachment = new Attachment();
+        attachment.setBase64datas(new byte[sizeInBytes]);
+        attachment.setExtension("pdf");
+        attachment.setName("file.pdf");
+        return attachment;
+    }
+}
