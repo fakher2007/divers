@@ -1,0 +1,44 @@
+-----------------------------
+custom validation annotation
+-----------------------------
+@Target({ElementType.PARAMETER, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = ListSizeValidator.class)
+public @interface MaxListSize {
+    int value();
+    String message() default "List size exceeds the maximum allowed limit.";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+--------------------
+implement validator
+--------------------
+public class ListSizeValidator implements ConstraintValidator<MaxListSize, List<?>> {
+    private int maxSize;
+
+    @Override
+    public void initialize(MaxListSize constraintAnnotation) {
+        this.maxSize = constraintAnnotation.value();
+    }
+
+    @Override
+    public boolean isValid(List<?> list, ConstraintValidatorContext context) {
+        return list != null && list.size() <= maxSize;
+    }
+}
+----------------
+apply annotation
+----------------
+@RestController
+@RequestMapping("/api")
+public class PayloadController {
+
+    @PutMapping("/update")
+    public ResponseEntity<String> updateData(@RequestBody @MaxListSize(value = 100) List<String> payload) {
+        // Process the payload
+        return ResponseEntity.ok("Data updated successfully!");
+    }
+}
+
+
+
