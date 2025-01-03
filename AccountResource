@@ -1,0 +1,115 @@
+----------
+Account resource unit tests
+----------
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+@ExtendWith(MockitoExtension.class)
+public class NickelAccountResourceTest {
+
+    @Mock
+    private ServiceFactory serviceFactory;
+
+    @Mock
+    private CopartisHelper copartisHelper;
+
+    @Mock
+    private NickelPassbookAccountService passbookService;
+
+    @InjectMocks
+    private NickelAccountResource nickelAccountResource;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(nickelAccountResource).build();
+    }
+
+    @Test
+    void testUpdateStatus_Success() throws Exception {
+        // Arrange
+        List<AccountStatusRequest> requests = Collections.singletonList(new AccountStatusRequest());
+        when(serviceFactory.getService(anyString(), eq(NickelPassbookAccount.class))).thenReturn(passbookService);
+        when(passbookService.updateAccounts(requests)).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        // Act & Assert
+        mockMvc.perform(put("/status")
+                .contentType("application/json")
+                .content("[{}]")
+                .header("token", "dummy-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testUpdateStatus_EmptyRequest() {
+        // Arrange
+        List<AccountStatusRequest> requests = Collections.emptyList();
+
+        // Act & Assert
+        ApiStatusException exception = assertThrows(ApiStatusException.class, () -> {
+            nickelAccountResource.updateStatus(requests, "dummy-token");
+        });
+
+        assertEquals(ApiStatusCodes.OBJECT_REQUIRED, exception.getStatusCode());
+    }
+
+    @Test
+    void testUpdateStatus_PayloadExceedsMaxSize() {
+        // Arrange
+        List<AccountStatusRequest> requests = Collections.nCopies(PAYLOAD_MAX_SIZE + 1, new AccountStatusRequest());
+
+        // Act & Assert
+        ApiStatusException exception = assertThrows(ApiStatusException.class, () -> {
+            nickelAccountResource.updateStatus(requests, "dummy-token");
+        });
+
+        assertEquals(ApiStatusCodes.MAX_PAYLOAD_ITEMS, exception.getStatusCode());
+    }
+
+    @Test
+    void testUpdateStatus_PartialUpdate() throws Exception {
+        // Arrange
+        List<AccountStatusRequest> requests = Collections.singletonList(new AccountStatusRequest());
+        when(serviceFactory.getService(anyString(), eq(NickelPassbookAccount.class))).thenReturn(passbookService);
+        when(passbookService.updateAccounts(requests)).thenReturn(new ResponseEntity<>(HttpStatus.PARTIAL_CONTENT));
+
+        // Act & Assert
+        mockMvc.perform(put("/status")
+                .contentType("application/json")
+                .content("[{}]")
+                .header("token", "dummy-token"))
+                .andExpect(status().isPartialContent());
+    }
+
+    @Test
+    void testUpdateStatus_NotAcceptable() throws Exception {
+        // Arrange
+        List<AccountStatusRequest> requests = Collections.singletonList(new AccountStatusRequest());
+        when(serviceFactory.getService(anyString(), eq(NickelPassbookAccount.class))).thenReturn(passbookService);
+        when(passbookService.updateAccounts(requests)).thenReturn(new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE));
+
+        // Act & Assert
+        mockMvc.perform(put("/status")
+                .contentType("application/json")
+                .content("[{}]")
+                .header("token", "dummy-token"))
+                .andExpect(status().isNotAcceptable());
+    }
+}
