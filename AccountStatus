@@ -58,3 +58,62 @@ definitions:
     required:
       - accountId
       - status
+
+----------
+openapi: 3.0.0
+info:
+  title: Nickel Accounts API
+  description: API for managing Nickel accounts
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/generic-api/priv/v1/nickel/accounts
+    description: Production server
+tags:
+  - name: Nickel accounts
+    description: Nickel accounts API
+paths:
+  /status:
+    put:
+      tags:
+        - Nickel accounts
+      summary: Update the account status
+      description: |
+        Updates the status of one or more accounts.
+        **Note:** The maximum number of items allowed in the payload is 100.
+      operationId: updateStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccountStatusRequest'
+              maxItems: 100  # Enforces the maximum number of items in the array
+        description: List of account status requests. The maximum number of items allowed is 100.
+      parameters:
+        - name: token
+          in: header
+          description: Authentication token
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Accounts are successfully updated
+        '206':
+          description: Accounts are partially updated
+        '400':
+          description: Unable to update accounts. Possible reasons include an empty payload or exceeding the maximum payload size of 100 items.
+components:
+  schemas:
+    AccountStatusRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+        status:
+          type: string
+      required:
+        - accountId
+        - status
