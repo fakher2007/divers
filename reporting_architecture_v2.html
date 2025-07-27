@@ -1,0 +1,1321 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Modular Reporting Microservice Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Canela:wght@300;400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        .font-canela { font-family: 'Canela', serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        img { max-width: 100%; }
+        .hero-gradient {
+            background: linear-gradient(135deg, #f5f5f0 0%, #e8e6e1 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #1a1a1a 0%, #4a5568 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: #fafaf9;
+            border-right: 1px solid #e5e5e5;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+        }
+        .content-offset {
+            margin-left: 280px;
+        }
+        .section-spacing {
+            margin-bottom: 4rem;
+        }
+        .citation-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        .citation-link:hover {
+            border-bottom-color: #2563eb;
+        }
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        .component-card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .component-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #fef7ed 0%, #fed7aa 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        .tech-stack-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: background-color 0.2s ease;
+        }
+        .tech-stack-item:hover {
+            background: #e2e8f0;
+        }
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .toc-fixed.open {
+                transform: translateX(0);
+            }
+            .content-offset {
+                margin-left: 0;
+            }
+            .architecture-grid {
+                grid-template-columns: 1fr;
+            }
+            .mermaid-control-btn:not(.reset-zoom) {
+                display: none;
+            }
+            .mermaid-controls {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+        @media (min-width: 1025px) {
+            .toc-fixed {
+                transform: translateX(0);
+            }
+            #toc-toggle {
+                display: none;
+            }
+        }
+
+        /* Prevent horizontal overflow on mobile */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+            .hero-gradient .flex {
+                flex-wrap: wrap;
+            }
+            .hero-gradient h1 {
+                font-size: 2rem;
+            }
+            .hero-gradient p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+  </head>
+
+  <body class="bg-gray-50 font-inter">
+    <!-- Table of Contents -->
+    <nav class="toc-fixed" id="toc">
+      <div class="mb-8">
+        <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Contents</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#overview" class="citation-link hover:text-blue-700">Overview</a>
+          </li>
+          <li>
+            <a href="#architecture" class="citation-link hover:text-blue-700">High-Level Architecture</a>
+          </li>
+          <li>
+            <a href="#components" class="citation-link hover:text-blue-700">Component Breakdown</a>
+          </li>
+          <li>
+            <a href="#low-code" class="citation-link hover:text-blue-700">Low-Code Integration</a>
+          </li>
+          <li>
+            <a href="#tech-stack" class="citation-link hover:text-blue-700">Technology Stack</a>
+          </li>
+          <li>
+            <a href="#security" class="citation-link hover:text-blue-700">Security & Access Control</a>
+          </li>
+          <li>
+            <a href="#scalability" class="citation-link hover:text-blue-700">Scalability & Deployment</a>
+          </li>
+          <li>
+            <a href="#extensibility" class="citation-link hover:text-blue-700">Extensibility & Maintenance</a>
+          </li>
+          <li>
+            <a href="#use-case" class="citation-link hover:text-blue-700">Example Use Case</a>
+          </li>
+          <li>
+            <a href="#validation" class="citation-link hover:text-blue-700">Validation Criteria</a>
+          </li>
+          <li>
+            <a href="#developer-experience" class="citation-link hover:text-blue-700">Developer Experience</a>
+          </li>
+          <li>
+            <a href="#observability" class="citation-link hover:text-blue-700">Observability</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Toggle button for TOC on mobile -->
+    <button id="toc-toggle" class="fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg md:hidden">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="content-offset">
+      <!-- Hero Section -->
+      <section class="hero-gradient min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-16">
+          <div class="flex flex-col md:grid md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8">
+              <div class="space-y-4">
+                <h1 class="font-canela text-4xl md:text-5xl lg:text-6xl font-bold text-gradient leading-tight">
+                  Modular Reporting Microservice Architecture
+                </h1>
+                <p class="text-lg md:text-xl text-gray-600 leading-relaxed">
+                  A scalable, extensible platform for generating up to 200,000 reports daily through configuration-driven and low-code paradigms
+                </p>
+              </div>
+
+              <!-- Key Highlights Grid -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-blue-600">200K</div>
+                  <div class="text-sm text-gray-600">Reports per day</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-green-600">Zero</div>
+                  <div class="text-sm text-gray-600">Code changes for new reports</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-purple-600">Multi</div>
+                  <div class="text-sm text-gray-600">Tenancy support</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-orange-600">GDPR</div>
+                  <div class="text-sm text-gray-600">Compliant by design</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="Abstract microservices architecture" class="w-full rounded-2xl shadow-2xl" size="large" aspect="wide" query="abstract microservices architecture" referrerpolicy="no-referrer" data-modified="1" data-score="11598.00"/>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content Sections -->
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-16 space-y-16">
+
+        <!-- Overview Section -->
+        <section id="overview" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Overview</h2>
+
+          <div class="prose prose-lg max-w-none">
+            <p class="text-xl text-gray-700 leading-relaxed mb-8">
+              The modular reporting microservice architecture is designed to provide a scalable, extensible, and maintainable platform for generating a high volume of reports through configuration-driven and low-code paradigms. It leverages Spring Boot, supports multiple data sources and PDF generation engines (including Amundi's R2), and ensures security and compliance with GDPR.
+            </p>
+
+            <div class="highlight-box">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Primary Objectives</h3>
+              <ul class="space-y-2 text-gray-700">
+                <li>• Provide a centralized, configurable service for generating various report types</li>
+                <li>• Streamline report generation process through abstraction of complexities</li>
+                <li>• Reduce time and effort required for creating and modifying reports</li>
+                <li>• Ensure data accuracy, timeliness, and compliance</li>
+                <li>• Support high volume (up to 200,000 reports daily) cost-effectively</li>
+              </ul>
+            </div>
+
+            <h3 class="font-canela text-2xl font-bold text-gray-900 mt-8 mb-4">Non-Functional Requirements</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Extensibility</h4>
+                <p class="text-gray-600 text-sm">New report types, data sources, and templates can be added with minimal to no code changes through robust configuration management and pluggable architecture <a href="https://www.redwood.com/article/power-of-extensibility-end-to-end-automation-solutions/" class="citation-link" target="_blank">[4]</a>.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Modularity</h4>
+                <p class="text-gray-600 text-sm">Loosely coupled, highly cohesive components that can be updated or replaced independently, enhancing testability and maintainability.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Pluggability</h4>
+                <p class="text-gray-600 text-sm">Plug-and-play model for key components using Strategy pattern or Service Provider Interface (SPI) <a href="https://link.springer.com/chapter/10.1007/978-3-031-78456-9_18" class="citation-link" target="_blank">[9]</a>.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Scalability</h4>
+                <p class="text-gray-600 text-sm">Stateless design capable of handling 200,000 reports daily through horizontal scaling with Kubernetes <a href="https://moldstud.com/articles/p-kafka-and-kubernetes-for-scalable-microservices" class="citation-link" target="_blank">[36]</a>.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">High-Level Architecture</h2>
+
+          <div class="mb-8">
+            <p class="text-lg text-gray-700 leading-relaxed">
+              The architecture emphasizes loose coupling between components, allowing for independent development, deployment, and scaling. A key element is the API Gateway, which serves as the single entry point for all client requests, handling routing, authentication, authorization, and load balancing <a href="https://dev.to/ayshriv/building-scalable-microservices-with-java-spring-boot-best-practices-and-techniques-part-2-3ld1" class="citation-link" target="_blank">[85]</a>.
+            </p>
+          </div>
+
+          <!-- Architecture Diagram -->
+          <div class="mermaid-container">
+            <div class="mermaid-controls">
+              <button class="mermaid-control-btn zoom-in" title="Zoom in">
+                <i class="fas fa-search-plus"></i>
+              </button>
+              <button class="mermaid-control-btn zoom-out" title="Zoom out">
+                <i class="fas fa-search-minus"></i>
+              </button>
+              <button class="mermaid-control-btn reset-zoom" title="Reset">
+                <i class="fas fa-expand-arrows-alt"></i>
+              </button>
+              <button class="mermaid-control-btn fullscreen" title="Fullscreen">
+                <i class="fas fa-expand"></i>
+              </button>
+            </div>
+            <div class="mermaid">
+flowchart TB
+    subgraph Clients ["***Clients & External Systems***"]
+        direction TB
+        A["Client Applications"]:::external
+        O["Identity Provider"]:::external
+        R2["R2 PDF Service"]:::external
+    end
+
+    subgraph Gateway ["***Gateway Layer***"]
+        direction TB
+        B["API Gateway"]:::gateway
+    end
+
+    subgraph Pipeline ["***Reporting Microservice Pipeline***"]
+        direction TB
+        P["API Layer"]:::component
+        Q["Execution Orchestrator"]:::component
+        E["Data Connector Layer"]:::component
+        DPAL["Data Processing & Aggregation"]:::component
+        I["Templating Layer"]:::component
+        L["Document Generator"]:::component
+    end
+
+    subgraph Storage ["***Storage Systems***"]
+        direction TB
+        D["Configuration Store (PostgreSQL)"]:::storage
+        M["Object Store (S3)"]:::storage
+    end
+
+    subgraph DataSources ["***Data Sources***"]
+        direction TB
+        F["Internal REST APIs"]:::external
+        G["External REST APIs"]:::external
+        H["Kafka Event Streams"]:::external
+    end
+
+    subgraph Engines ["***PDF Engines***"]
+        direction TB
+        K["Other PDF Engines (iText, FlyingSaucer)"]:::external
+    end
+
+    A eA@-- HTTP Requests --> B
+    O eO@-- Authenticates --> B
+    B eB@-- Routes --> P
+    P eP@--> Q
+    Q eQ@--> E
+    E eE@--> DPAL
+    DPAL eDPAL@--> I
+    I eI@--> L
+    L eL@-- Stores --> M
+    Q eD@-- Manages --> D
+
+    E eF@-- Fetches --> F
+    E eG@-- Fetches --> G
+    E eH@-- Consumes --> H
+
+    I eK@-- Uses --> K
+    I eR2@-- Requests --> R2
+
+    eA@{ animation: fast }
+    eO@{ animation: fast }
+    eB@{ animation: fast }
+    eP@{ animation: fast }
+    eQ@{ animation: fast }
+    eE@{ animation: fast }
+    eDPAL@{ animation: fast }
+    eI@{ animation: fast }
+    eL@{ animation: fast }
+    eD@{ animation: fast }
+    eF@{ animation: fast }
+    eG@{ animation: fast }
+    eH@{ animation: fast }
+    eK@{ animation: slow }
+    eR2@{ animation: slow }
+
+    classDef external fill:#E6E6FA,stroke:#333,stroke-width:2px,color:#000
+    classDef gateway fill:#D4EDDA,stroke:#333,stroke-width:2px,color:#000
+    classDef microservice fill:#CDECFC,stroke:#333,stroke-width:2px,color:#000
+    classDef storage fill:#FFF3CD,stroke:#333,stroke-width:2px,color:#000
+    classDef component fill:#F8D7DA,stroke:#333,stroke-width:2px,color:#000
+
+            </div>
+          </div>
+
+          <div class="architecture-grid mt-8">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">API Gateway</h3>
+              <p class="text-gray-600">Single entry point handling routing, authentication, authorization, SSL termination, and load balancing. Centralizes cross-cutting concerns and shields internal services.</p>
+            </div>
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Reporting Microservice</h3>
+              <p class="text-gray-600">Core service encapsulating report generation functionality with internal modular layers and RESTful API exposed to clients.</p>
+            </div>
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Configuration Store</h3>
+              <p class="text-gray-600">Persists metadata and configurations for reports, templates, and data sources, typically using PostgreSQL for structured storage.</p>
+            </div>
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">External Systems</h3>
+              <p class="text-gray-600">Diverse data sources including REST APIs, Kafka event streams, and specialized services like Amundi's R2 for PDF generation <a href="https://blog.stackademic.com/handling-reporting-on-microservices-architecture-d0fac47e9ece" class="citation-link" target="_blank">[176]</a>.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Component Breakdown -->
+        <section id="components" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Component Breakdown</h2>
+
+          <div class="space-y-8">
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">API Layer</h3>
+              <p class="text-gray-700 mb-4">Primary interface for external communication, built as RESTful API using Spring Boot's web capabilities. Handles request validation, authentication, authorization, and audit logging <a href="https://medium.com/@syedabdullahrahman/mastering-rest-api-design-essential-best-practices-dos-and-don-ts-for-2024-dd41a2c59133" class="citation-link" target="_blank">[15]</a>.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-bold text-gray-900 mb-2">Key Responsibilities:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>• Request handling with dynamic input parameters</li>
+                  <li>• Thorough request validation using Spring annotations</li>
+                  <li>• Audit logging for compliance and security</li>
+                  <li>• Orchestration initiation and response handling</li>
+                  <li>• Content negotiation support</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Configuration Layer</h3>
+              <p class="text-gray-700 mb-4">Manages all metadata and settings defining how reports are generated, externalizing configurations to enable extensibility without code changes.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-bold text-gray-900 mb-2">Storage Options:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>• <strong>PostgreSQL:</strong> Relational database for structured configuration</li>
+                  <li>• <strong>YAML/JSON:</strong> Human-readable files with version control</li>
+                  <li>• <strong>Low-code Interface:</strong> GUI-based configuration editor</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Data Fetching Layer</h3>
+              <p class="text-gray-700 mb-4">Abstracts the retrieval of raw data from diverse sources using pluggable connectors (Strategy pattern or SPI). Its sole responsibility is to connect to external systems and fetch data without applying business logic.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-bold text-gray-900 mb-2">Technologies:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>• Spring WebClient for reactive HTTP communication</li>
+                  <li>• Apache Camel for integration patterns <a href="https://medium.com/@tharusha.wijayabahu/integrating-apache-camel-with-spring-boot-for-scalable-industrial-microservices-d407bc524863" class="citation-link" target="_blank">[135]</a></li>
+                  <li>• Circuit breaker patterns with Resilience4J</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Data Processing & Aggregation Layer</h3>
+              <p class="text-gray-700 mb-4">A dedicated layer responsible for aggregating data from multiple sources and applying business logic or complex transformations. It prepares a clean, unified data model (context) for the templating layer.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-bold text-gray-900 mb-2">Key Responsibilities:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>• Combining data from multiple connectors (e.g., joining customer and order data)</li>
+                  <li>• Executing complex calculations and business rules</li>
+                  <li>• Structuring the final data context for the template</li>
+                  <li>• Scripting capabilities using JQ, SpEL, or Groovy for advanced logic</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Templating Layer</h3>
+              <p class="text-gray-700 mb-4">Consumes the pre-processed data context and merges it with a report template. It uses a generic configuration schema to delegate to the appropriate pluggable engine (e.g., R2, Thymeleaf, iText) without being coupled to a specific implementation.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Document Generator Layer</h3>
+              <p class="text-gray-700 mb-4">Converts processed templates to output formats (PDF, Excel) using pluggable engines like R2, iText, and Flying Saucer with Strategy pattern implementation.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Execution Orchestrator</h3>
+              <p class="text-gray-700 mb-4">Central coordinating component managing the end-to-end report generation workflow. It ensures fault tolerance by persisting the state of each job in the PostgreSQL database.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-bold text-gray-900 mb-2">State Management:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>• A `report_jobs` table tracks the lifecycle of each report.</li>
+                  <li>• States include `PENDING`, `FETCHING_DATA`, `PROCESSING_DATA`, `GENERATING_DOCUMENT`, `COMPLETED`, `FAILED`.</li>
+                  <li>• The orchestrator polls for pending jobs and transactionally updates the state upon completing each step.</li>
+                  <li>• Implements robust error handling and configurable retry mechanisms for failed steps.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Low-Code Integration -->
+        <section id="low-code" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Low-Code / No-Code Integration</h2>
+
+          <div class="highlight-box">
+            <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Empowering Business Users</h3>
+            <p class="text-gray-700">The architecture empowers users with limited coding expertise to manage and extend reporting capabilities through intuitive interfaces and declarative configurations.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="component-card">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-code text-blue-600 text-2xl mr-3"></i>
+                <h3 class="font-canela text-xl font-bold text-gray-900">Declarative Configuration</h3>
+              </div>
+              <p class="text-gray-600 text-sm">Report definitions using YAML/JSON formats specify inputs, data sources, transformations, templates, and outputs without Java coding.</p>
+            </div>
+
+            <div class="component-card">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-desktop text-green-600 text-2xl mr-3"></i>
+                <h3 class="font-canela text-xl font-bold text-gray-900">GUI Configuration Editor</h3>
+              </div>
+              <p class="text-gray-600 text-sm">Web-based tool with forms and wizards for visual report configuration management, generating underlying configuration files.</p>
+            </div>
+
+            <div class="component-card">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-terminal text-purple-600 text-2xl mr-3"></i>
+                <h3 class="font-canela text-xl font-bold text-gray-900">Scripting Interface</h3>
+              </div>
+              <p class="text-gray-600 text-sm">Embedded scripting with Groovy, JavaScript, or SpEL for complex logic while maintaining low-code paradigm for advanced scenarios.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Technology Stack -->
+        <section id="tech-stack" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Technology Stack</h2>
+
+          <div class="space-y-6">
+            <div class="tech-stack-item">
+              <div class="bg-blue-100 p-3 rounded-lg">
+                <i class="fab fa-java text-blue-600 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">Spring Boot (Java 17+)</h3>
+                <p class="text-sm text-gray-600">Core framework providing convention-over-configuration, embedded server support, and comprehensive ecosystem integration <a href="https://www.geeksforgeeks.org/springboot/spring-boot-architecture/" class="citation-link" target="_blank">[28]</a>.</p>
+              </div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="bg-green-100 p-3 rounded-lg">
+                <i class="fas fa-database text-green-600 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">PostgreSQL</h3>
+                <p class="text-sm text-gray-600">Relational database for configuration storage with JSON support, ACID compliance, and advanced query capabilities.</p>
+              </div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="bg-purple-100 p-3 rounded-lg">
+                <i class="fas fa-file-pdf text-purple-600 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">PDF Generation Engines</h3>
+                <p class="text-sm text-gray-600">R2 (primary), iText <a href="https://www.javaboy.org/2024/1009/springboot-itext-pdf.html" class="citation-link" target="_blank">[144]</a>, Flying Saucer with pluggable architecture for flexibility.</p>
+              </div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="bg-orange-100 p-3 rounded-lg">
+                <i class="fas fa-network-wired text-orange-600 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">Data Connectors</h3>
+                <p class="text-sm text-gray-600">Spring WebClient for reactive HTTP, Apache Camel for integration patterns, GraphQL support where appropriate.</p>
+              </div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="bg-red-100 p-3 rounded-lg">
+                <i class="fas fa-shield-alt text-red-600 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">API Security</h3>
+                <p class="text-sm text-gray-600">OAuth2/JWT for authentication, OpenAPI/Swagger for API documentation <a href="https://www.cnblogs.com/cg-ww/p/15680051.html" class="citation-link" target="_blank">[32]</a>.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Security Section -->
+        <section id="security" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Security and Access Control</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">API Security (OAuth2/JWT)</h3>
+              <p class="text-gray-600 mb-4">Industry-standard protocols for securing API access. Clients obtain JWT tokens from Identity Provider for authorization.</p>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Token validation at API Gateway</li>
+                <li>• HTTPS/TLS for data in transit</li>
+                <li>• Scope-based authorization checks</li>
+              </ul>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Role-Based Access Control</h3>
+              <p class="text-gray-600 mb-4">Fine-grained permissions defining report access, data visibility, and operations based on user roles.</p>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Role-based permissions hierarchy</li>
+                <li>• Principle of least privilege</li>
+                <li>• Multi-tenant data isolation</li>
+              </ul>
+            </div>
+
+            <div class="component-card col-span-1 md:col-span-2">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Audit Logging</h3>
+              <p class="text-gray-600 mb-4">Comprehensive audit trails for compliance (GDPR) and security monitoring, capturing essential event information.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-bold text-gray-900 mb-2">Logged Information:</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                  <div>• Timestamp</div>
+                  <div>• User Identity</div>
+                  <div>• Action Performed</div>
+                  <div>• Report Parameters</div>
+                  <div>• Source IP</div>
+                  <div>• Outcome Status</div>
+                  <div>• Configuration Version</div>
+                  <div>• Error Details</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Scalability Section -->
+        <section id="scalability" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Scalability and Deployment</h2>
+
+          <div class="space-y-8">
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Stateless Design</h3>
+              <p class="text-gray-700">Each request contains all necessary information, with no client session state stored locally. Enables horizontal scaling by allowing any instance to handle any request.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Horizontal Scaling (Kubernetes)</h3>
+              <p class="text-gray-700 mb-4">Containerized deployment on Kubernetes for automated scaling, load balancing, and self-healing capabilities to handle 200,000 reports daily <a href="https://talent500.com/blog/microservices-12-essential-strategies/" class="citation-link" target="_blank">[3]</a>.</p>
+              <div class="bg-blue-50 p-4 rounded-lg">
+                <h4 class="font-bold text-blue-900 mb-2">Kubernetes Features:</h4>
+                <ul class="text-sm text-blue-800 space-y-1">
+                  <li>• Automatic scaling based on load</li>
+                  <li>• Service discovery and load balancing</li>
+                  <li>• Self-healing with automatic restarts</li>
+                  <li>• Rolling updates and rollbacks</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Asynchronous Processing</h3>
+              <p class="text-gray-700 mb-4">Message queues (Kafka/RabbitMQ) decouple report generation triggers from processing, improving throughput and resource utilization <a href="https://dev.to/24mwangi/kafka-event-driven-microservices-1mei" class="citation-link" target="_blank">[179]</a>.</p>
+              <div class="bg-green-50 p-4 rounded-lg">
+                <h4 class="font-bold text-green-900 mb-2">Benefits:</h4>
+                <ul class="text-sm text-green-800 space-y-1">
+                  <li>• Improved system responsiveness</li>
+                  <li>• Efficient resource management</li>
+                  <li>• Fault tolerance and message replay</li>
+                  <li>• Independent scaling of components</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Extensibility Section -->
+        <section id="extensibility" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Extensibility and Maintenance</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="component-card">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-cogs text-blue-600 text-2xl mr-3"></i>
+                <h3 class="font-canela text-xl font-bold text-gray-900">Configuration-Driven Reports</h3>
+              </div>
+              <p class="text-gray-600 text-sm">New reports added through YAML/JSON configurations without code changes or redeployment, empowering business analysts.</p>
+            </div>
+
+            <div class="component-card">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-plug text-green-600 text-2xl mr-3"></i>
+                <h3 class="font-canela text-xl font-bold text-gray-900">Pluggable Data Connectors</h3>
+              </div>
+              <p class="text-gray-600 text-sm">New data sources integrated by implementing connector interfaces using Strategy pattern or SPI for minimal impact on core logic.</p>
+            </div>
+
+            <div class="component-card">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-file-export text-purple-600 text-2xl mr-3"></i>
+                <h3 class="font-canela text-xl font-bold text-gray-900">Pluggable PDF Engines</h3>
+              </div>
+              <p class="text-gray-600 text-sm">TemplateEngine SPI allows integration of alternative PDF generation engines beyond R2, avoiding vendor lock-in.</p>
+            </div>
+          </div>
+
+          <div class="highlight-box mt-8">
+            <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Maintenance Advantages</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-bold text-gray-900 mb-2">Reduced Development Overhead</h4>
+                <p class="text-gray-700 text-sm">Configuration changes replace code modifications, reducing testing and deployment cycles.</p>
+              </div>
+              <div>
+                <h4 class="font-bold text-gray-900 mb-2">Independent Component Updates</h4>
+                <p class="text-gray-700 text-sm">Loose coupling allows individual components to be updated without system-wide impact.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Use Case Section -->
+        <section id="use-case" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Example Use Case: Client Investment Report</h2>
+
+          <div class="space-y-6">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">1. Input Parameters</h3>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>{
+  &#34;reportType&#34;: &#34;ClientInvestmentReport&#34;,
+  &#34;clientId&#34;: &#34;CLIENT12345&#34;,
+  &#34;startDate&#34;: &#34;2023-01-01&#34;,
+  &#34;endDate&#34;: &#34;2023-06-30&#34;,
+  &#34;outputFormat&#34;: &#34;PDF&#34;
+}</code></pre>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">2. Configuration Retrieval</h3>
+              <p class="text-gray-700 mb-4">Configuration Layer retrieves report definition from PostgreSQL, including:</p>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Data sources: ClientPortfolioService and TransactionService REST APIs</li>
+                <li>• Data transformations: JQ/SpEL scripts for data formatting</li>
+                <li>• Template reference: A generic template object is defined.</li>
+              </ul>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>{
+  &#34;engine&#34;: &#34;R2&#34;,
+  &#34;reference&#34;: &#34;client-invest-report-v3&#34;,
+  &#34;version&#34;: &#34;1.2&#34;
+}</code></pre>
+              </div>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">3. Data Retrieval Process</h3>
+              <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>Data Fetching Layer identifies required data sources from the configuration.</li>
+                <li>HTTP Connectors call internal REST APIs (ClientPortfolioService, TransactionService).</li>
+                <li>Raw JSON responses are retrieved and passed to the next layer.</li>
+              </ol>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">4. Data Processing & Aggregation</h3>
+              <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>The Data Processing Layer receives the raw data.</li>
+                <li>It aggregates portfolio and transaction data into a single structure.</li>
+                <li>SpEL/JQ scripts are applied to format dates, calculate totals, and prepare the final data context.</li>
+              </ol>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">5. Template Processing & Output</h3>
+              <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>Templating Layer inspects the template configuration and routes to the "R2" engine plugin.</li>
+                <li>It sends the processed data context and the template reference ("client-invest-report-v3") to the R2 service.</li>
+                <li>R2 processes the template and generates the PDF document.</li>
+                <li>Document Generator receives the PDF and streams it to the client.</li>
+                <li>Optionally, the PDF is stored in an object store for asynchronous retrieval.</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Validation Criteria -->
+        <section id="validation" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Validation Criteria</h2>
+
+          <div class="space-y-6">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Microservice Best Practices Alignment</h3>
+              <p class="text-gray-700">Evaluation of adherence to single responsibility, loose coupling, high cohesion, statelessness, and API-first design principles <a href="https://medium.com/@masonarmani38/reporting-strategy-in-a-microservice-architechture-4d02cd7ed233" class="citation-link" target="_blank">[192]</a>.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">API-First Approach</h3>
+              <p class="text-gray-700">Assessment of OpenAPI/Swagger contract design, versioning strategy, and client integration experience.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Modularity and Loose Coupling</h3>
+              <p class="text-gray-700">Verification of component independence and interface-based communication between layers.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Configuration-Driven Extensibility</h3>
+              <p class="text-gray-700">Validation of ability to add reports and modify configurations without Java code changes or redeployment.</p>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">R2 Integration and Decoupling</h3>
+              <p class="text-gray-700">Assessment of abstraction layers ensuring flexibility to incorporate alternative PDF generation engines beyond R2.</p>
+            </div>
+          </div>
+
+          <div class="highlight-box mt-8">
+            <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Architecture Validation Checklist</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-bold text-gray-900 mb-2">Functional Requirements</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>✓ Dynamic input parameter support</li>
+                  <li>✓ Multiple report type configuration</li>
+                  <li>✓ Diverse data source integration</li>
+                  <li>✓ Template engine flexibility</li>
+                </ul>
+              </div>
+              <div>
+                <h4 class="font-bold text-gray-900 mb-2">Non-Functional Requirements</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>✓ 200K reports/day scalability</li>
+                  <li>✓ GDPR compliance measures</li>
+                  <li>✓ Multi-tenancy support</li>
+                  <li>✓ Error handling and resilience</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Developer Experience Section -->
+        <section id="developer-experience" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Developer Experience (DX)</h2>
+          <div class="prose prose-lg max-w-none">
+            <p class="text-xl text-gray-700 leading-relaxed mb-8">
+              To ensure the long-term success and adoption of the pluggable architecture, a strong focus on developer experience is essential. The goal is to make it as simple as possible for developers to extend the system with new data connectors and template engines.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Well-Defined Interfaces</h4>
+                <p class="text-gray-600 text-sm">The system will provide clear, well-documented Java interfaces for the `DataConnector` and `TemplateEngine` plugins, establishing a firm contract for implementation.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">SDKs and Starter Kits</h4>
+                <p class="text-gray-600 text-sm">To lower the barrier to entry, the project will include template Maven/Gradle projects that developers can use as a starting point for creating new plugins, complete with example code.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Observability Section -->
+        <section id="observability" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Observability Strategy</h2>
+          <div class="prose prose-lg max-w-none">
+            <p class="text-xl text-gray-700 leading-relaxed mb-8">
+              For a high-throughput, distributed system, a comprehensive observability strategy is critical for monitoring, troubleshooting, and ensuring performance. The architecture will incorporate the three pillars of observability.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Centralized Logging</h4>
+                <p class="text-gray-600 text-sm">All components will stream logs to a centralized logging platform (e.g., ELK Stack) to enable efficient debugging and analysis across the distributed system.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Metrics and Monitoring</h4>
+                <p class="text-gray-600 text-sm">The service will expose key performance indicators (e.g., report throughput, error rates, latency) via Prometheus, with dashboards in Grafana for real-time monitoring.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Distributed Tracing</h4>
+                <p class="text-gray-600 text-sm">Implementing distributed tracing with OpenTelemetry will allow for end-to-end visibility of a request as it flows through the system, which is essential for identifying performance bottlenecks.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize Mermaid with custom configuration
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#1a1a1a',
+                primaryBorderColor: '#374151',
+                lineColor: '#6b7280',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#fef7ed',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8fafc',
+                tertiaryBkg: '#fef7ed',
+                primaryBorderColor: '#374151',
+                primaryTextColor: '#1a1a1a',
+                secondaryTextColor: '#374151',
+                tertiaryTextColor: '#6b7280',
+                lineColor: '#6b7280',
+                textColor: '#1a1a1a',
+                THEME_COLOR_LIMIT: 12
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            fontSize: 14,
+            fontFamily: 'Inter, sans-serif'
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // Touch-related state
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return;
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // Get the distance between two points
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - Touch event handling
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // Single-finger drag
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // Double-finger zoom
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // Single-finger drag
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // Double-finger zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // Reset state
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // Delay reset isTouch to avoid immediate mouse events
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // Switch from double-finger to single-finger, switch to drag mode
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize Mermaid
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'base',
+                themeVariables: {
+                    primaryColor: '#ffffff',
+                    primaryTextColor: '#1a1a1a',
+                    primaryBorderColor: '#374151',
+                    lineColor: '#6b7280',
+                    secondaryColor: '#f8fafc',
+                    tertiaryColor: '#fef7ed',
+                    background: '#ffffff',
+                    mainBkg: '#ffffff',
+                    secondBkg: '#f8fafc',
+                    tertiaryBkg: '#fef7ed',
+                    primaryBorderColor: '#374151',
+                    primaryTextColor: '#1a1a1a',
+                    secondaryTextColor: '#374151',
+                    tertiaryTextColor: '#6b7280',
+                    lineColor: '#6b7280',
+                    textColor: '#1a1a1a',
+                    THEME_COLOR_LIMIT: 12
+                },
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: true,
+                    curve: 'basis',
+                    padding: 20
+                },
+                fontSize: 14,
+                fontFamily: 'Inter, sans-serif'
+            });
+
+            // Wait for mermaid to render, then initialize controls
+            setTimeout(initializeMermaidControls, 1000);
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Toggle TOC on mobile
+        document.getElementById('toc-toggle').addEventListener('click', function() {
+            const toc = document.getElementById('toc');
+            toc.classList.toggle('open');
+        });
+
+        // Close TOC when clicking on a link (mobile)
+        document.querySelectorAll('#toc a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 1024) {
+                    const toc = document.getElementById('toc');
+                    toc.classList.remove('open');
+                }
+            });
+        });
+    </script>
+  
+
+</body>
+</html>
