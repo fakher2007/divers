@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Reporting Architecture with Interactive Diagram</title>
+    <meta name="description" content="Scalable reporting architecture with interactive diagram controls">
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" as="script">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Montserrat:wght@400;600;700&display=swap" as="style">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #f59e0b;
+            --dark-text: #1a1a1a;
+            --medium-text: #4a5568;
+            --light-text: #6b7280;
+            --light-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --processing-color: #8b5cf6;
+        }
+        
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .font-roboto { font-family: 'Roboto', sans-serif; }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, var(--dark-text) 0%, var(--medium-text) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: #fafaf9;
+            border-right: 1px solid #e5e5e5;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .content-offset {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+        }
+        
+        .section-spacing {
+            margin-bottom: 4rem;
+            scroll-margin-top: 2rem;
+        }
+        
+        .citation-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        
+        .citation-link:hover {
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .component-card {
+            background: var(--card-bg);
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .component-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fef7ed 0%, #fed7aa 100%);
+            border-left: 4px solid var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .processing-highlight {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border-left: 4px solid var(--processing-color);
+        }
+        
+        .tech-stack-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light-bg);
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: background-color 0.2s ease;
+        }
+        
+        .tech-stack-item:hover {
+            background: #e2e8f0;
+        }
+        
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 80vh;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .diagram-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .diagram-controls button {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            border: none;
+            background: #f8fafc;
+            color: #4a5568;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .diagram-controls button:hover {
+            background: #e2e8f0;
+            color: #1a202c;
+        }
+        
+        .diagram-controls button:active {
+            transform: scale(0.95);
+        }
+        
+        .mermaid-diagram {
+            width: 100%;
+            min-height: 300px;
+            overflow: auto;
+            cursor: move;
+            cursor: grab;
+        }
+        
+        .mermaid-diagram:active {
+            cursor: grabbing;
+        }
+        
+        .workflow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            margin: 2rem 0;
+        }
+        
+        .workflow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            position: relative;
+            padding-left: 2.5rem;
+        }
+        
+        .workflow-step:before {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        
+        .workflow-step:last-child:before {
+            height: 1.5rem;
+        }
+        
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .step-content {
+            background: var(--light-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            flex-grow: 1;
+        }
+        
+        .processing-icon {
+            color: var(--processing-color);
+            font-size: 1.5rem;
+        }
+        
+        /* Fullscreen styles */
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            background: white;
+            padding: 20px;
+        }
+        
+        .fullscreen .mermaid-diagram {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .fullscreen .diagram-controls {
+            top: 20px;
+            right: 20px;
+        }
+        
+        /* Accessibility improvements */
+        :focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* Reduced motion alternatives */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+            
+            .component-card:hover {
+                transform: none;
+            }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                transform: translateX(-100%);
+            }
+            
+            .toc-fixed.open {
+                transform: translateX(0);
+            }
+            
+            .content-offset {
+                margin-left: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero-gradient .flex {
+                flex-wrap: wrap;
+            }
+            
+            .hero-gradient h1 {
+                font-size: 2rem;
+            }
+            
+            .section-spacing {
+                margin-bottom: 3rem;
+            }
+            
+            .workflow-step {
+                padding-left: 2rem;
+            }
+            
+            .step-number {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            .diagram-controls {
+                top: 5px;
+                right: 5px;
+                gap: 4px;
+                padding: 4px;
+            }
+            
+            .diagram-controls button {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-roboto">
+    <a href="#main-content" class="sr-only">Skip to main content</a>
+    
+    <!-- Table of Contents -->
+    <nav class="toc-fixed" id="toc" aria-label="Table of Contents">
+        <div class="mb-8">
+            <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">Contents</h3>
+            <ul class="space-y-2 text-sm">
+                <li><a href="#overview" class="citation-link hover:text-blue-700">Overview</a></li>
+                <li><a href="#architecture" class="citation-link hover:text-blue-700">Enhanced Architecture</a></li>
+                <li><a href="#data-processing" class="citation-link hover:text-blue-700">Data Processing Layer</a></li>
+                <li><a href="#components" class="citation-link hover:text-blue-700">Component Breakdown</a></li>
+                <li><a href="#tech-stack" class="citation-link hover:text-blue-700">Technology Stack</a></li>
+                <li><a href="#use-case" class="citation-link hover:text-blue-700">Use Case with Data Processing</a></li>
+                <li><a href="#benefits" class="citation-link hover:text-blue-700">Benefits & Validation</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Toggle button for TOC on mobile -->
+    <button id="toc-toggle" class="fixed top-4 left-4 z-50 bg-white p-3 rounded-lg shadow-lg md:hidden focus:outline-none" aria-label="Toggle Table of Contents" aria-expanded="false">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main id="main-content" class="content-offset">
+        <!-- Hero Section -->
+        <section class="hero-gradient min-h-screen flex items-center" aria-label="Introduction">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-16">
+                <div class="flex flex-col md:grid md:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-8">
+                        <div class="space-y-4">
+                            <h1 class="font-montserrat text-4xl md:text-5xl lg:text-6xl font-bold text-gradient leading-tight">
+                                Enhanced Reporting Architecture
+                            </h1>
+                            <p class="text-lg md:text-xl text-gray-600 leading-relaxed">
+                                Scalable microservice architecture with dedicated data processing layer for transforming multi-source data
+                            </p>
+                        </div>
+
+                        <!-- Key Highlights Grid -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="text-2xl font-bold text-blue-600">200K</div>
+                                <div class="text-sm text-gray-600">Reports per day</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="text-2xl font-bold text-purple-600">New</div>
+                                <div class="text-sm text-gray-600">Data Processing Layer</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="text-2xl font-bold text-green-600">Interactive</div>
+                                <div class="text-sm text-gray-600">Architecture Diagram</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="text-2xl font-bold text-orange-600">GDPR</div>
+                                <div class="text-sm text-gray-600">Compliant Processing</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative" aria-hidden="true">
+                        <img 
+                            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" 
+                            alt="Abstract data processing visualization" 
+                            class="w-full rounded-2xl shadow-2xl"
+                            loading="lazy"
+                        >
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Sections -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-16 space-y-16">
+            <!-- Overview Section -->
+            <section id="overview" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Enhanced Architecture Overview</h2>
+
+                <div class="prose prose-lg max-w-none">
+                    <p class="text-xl text-gray-700 leading-relaxed mb-8">
+                        The enhanced reporting architecture now includes a dedicated Data Processing Layer to handle the transformation and preparation of data from multiple sources. This critical addition addresses the need to process raw data into a format suitable for templating and final report generation.
+                    </p>
+
+                    <div class="highlight-box processing-highlight">
+                        <h3 class="font-montserrat text-2xl font-bold text-gray-900 mb-4">Key Enhancement: Data Processing Layer</h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li>• Dedicated component for data transformation and preparation</li>
+                            <li>• Handles complex operations: aggregation, normalization, enrichment</li>
+                            <li>• Ensures data consistency across multiple sources</li>
+                            <li>• Provides GDPR-compliant data masking and anonymization</li>
+                            <li>• Supports custom business logic through scripting</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Section -->
+            <section id="architecture" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Enhanced Architecture with Data Processing</h2>
+
+                <div class="mb-8">
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                        The architecture now features a dedicated Data Processing Layer between the Data Fetching and Templating layers. This layer handles all necessary transformations to prepare multi-source data for report generation.
+                    </p>
+                </div>
+
+                <!-- Architecture Diagram -->
+                <div class="mermaid-container">
+                    <div class="diagram-controls">
+                        <button id="zoom-in" title="Zoom In" aria-label="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button id="zoom-out" title="Zoom Out" aria-label="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button id="reset-zoom" title="Reset Zoom" aria-label="Reset Zoom">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button id="full-screen" title="Full Screen" aria-label="Full Screen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                    <div id="mermaid-diagram" class="mermaid-diagram">
+                        <!-- Mermaid diagram will be rendered here -->
+                    </div>
+                </div>
+
+                <div class="architecture-grid mt-8">
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-3">Data Fetching Layer</h3>
+                        <p class="text-gray-600">Retrieves raw data from diverse sources including REST APIs, databases, and event streams.</p>
+                    </div>
+                    <div class="component-card" style="border-top: 4px solid #8b5cf6;">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-3">Data Processing Layer</h3>
+                        <p class="text-gray-600">Transforms, aggregates, and prepares data for templating using custom business logic.</p>
+                    </div>
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-3">Templating Layer</h3>
+                        <p class="text-gray-600">Applies processed data to templates using engines like R2, iText, or Flying Saucer.</p>
+                    </div>
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-3">Document Generator</h3>
+                        <p class="text-gray-600">Produces final reports in required formats and stores them in object storage.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Processing Layer Section -->
+            <section id="data-processing" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Data Processing Layer</h2>
+
+                <div class="space-y-8">
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-2xl font-bold text-gray-900 mb-4">Purpose and Functionality</h3>
+                        <p class="text-gray-700 mb-4">
+                            The Data Processing Layer serves as the critical intermediary between data acquisition and report generation. It transforms raw, multi-source data into a structured format optimized for templating.
+                        </p>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-gray-900 mb-2">Key Responsibilities:</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• <strong>Data Transformation:</strong> Convert raw data into template-ready structures</li>
+                                <li>• <strong>Aggregation:</strong> Combine data from multiple sources into unified datasets</li>
+                                <li>• <strong>Enrichment:</strong> Enhance data with additional context from reference sources</li>
+                                <li>• <strong>Normalization:</strong> Standardize formats, units, and naming conventions</li>
+                                <li>• <strong>GDPR Compliance:</strong> Apply data masking and anonymization techniques</li>
+                                <li>• <strong>Validation:</strong> Ensure data quality and integrity before templating</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-2xl font-bold text-gray-900 mb-4">Implementation Approach</h3>
+                        <p class="text-gray-700 mb-4">
+                            The layer is designed with flexibility in mind, supporting both configuration-driven transformations and custom scripting for complex scenarios.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-cogs processing-icon mr-2"></i>
+                                    <h4 class="font-bold text-gray-900">Configuration-Driven</h4>
+                                </div>
+                                <p class="text-sm text-gray-600">Simple transformations defined through YAML/JSON configurations without coding.</p>
+                                <pre class="text-xs mt-2 p-2 bg-gray-800 text-gray-200 rounded">transformations:
+  - field: full_name
+    operation: concat
+    sources: [first_name, last_name]</pre>
+                            </div>
+                            
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-code processing-icon mr-2"></i>
+                                    <h4 class="font-bold text-gray-900">Scripting Support</h4>
+                                </div>
+                                <p class="text-sm text-gray-600">Complex logic implemented with Groovy, JavaScript, or Python scripts.</p>
+                                <pre class="text-xs mt-2 p-2 bg-gray-800 text-gray-200 rounded">function calculateROI(investments) {
+  return investments.map(inv => {
+    return {
+      ...inv,
+      roi: ((inv.current - inv.principal) / inv.principal) * 100
+    }
+  })
+}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Component Breakdown -->
+            <section id="components" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Component Breakdown</h2>
+
+                <div class="space-y-8">
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-2xl font-bold text-gray-900 mb-4">Data Processing Layer Components</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-bold text-gray-900">Transformation Engine</h4>
+                                <p class="text-sm text-gray-600">Applies data mapping rules and conversion logic</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-bold text-gray-900">Aggregation Service</h4>
+                                <p class="text-sm text-gray-600">Combines data from multiple sources</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-bold text-gray-900">Enrichment Module</h4>
+                                <p class="text-sm text-gray-600">Adds reference data to enhance context</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-bold text-gray-900">Normalization</h4>
+                                <p class="text-sm text-gray-600">Standardizes formats and units</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-bold text-gray-900">GDPR Compliance</h4>
+                                <p class="text-sm text-gray-600">Applies data masking rules</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-bold text-gray-900">Script Engine</h4>
+                                <p class="text-sm text-gray-600">Executes custom transformation logic</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-2xl font-bold text-gray-900 mb-4">Data Processing Workflow</h3>
+                        
+                        <div class="workflow-steps">
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4 class="font-bold text-gray-900 mb-2">Data Ingestion</h4>
+                                    <p class="text-sm text-gray-600">Collect raw data from multiple sources via Data Connector Layer</p>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4 class="font-bold text-gray-900 mb-2">Transformation</h4>
+                                    <p class="text-sm text-gray-600">Apply mapping rules to convert data into consistent structures</p>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4 class="font-bold text-gray-900 mb-2">Aggregation</h4>
+                                    <p class="text-sm text-gray-600">Combine related data from different sources into unified datasets</p>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4 class="font-bold text-gray-900 mb-2">Enrichment</h4>
+                                    <p class="text-sm text-gray-600">Add reference data to provide additional context</p>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step">
+                                <div class="step-number">5</div>
+                                <div class="step-content">
+                                    <h4 class="font-bold text-gray-900 mb-2">Validation</h4>
+                                    <p class="text-sm text-gray-600">Ensure data quality, completeness, and compliance</p>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step">
+                                <div class="step-number">6</div>
+                                <div class="step-content">
+                                    <h4 class="font-bold text-gray-900 mb-2">Output</h4>
+                                    <p class="text-sm text-gray-600">Pass processed data to Templating Layer for report generation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technology Stack -->
+            <section id="tech-stack" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Technology Stack</h2>
+
+                <div class="space-y-6">
+                    <div class="tech-stack-item">
+                        <div class="bg-purple-100 p-3 rounded-lg">
+                            <i class="fas fa-cogs processing-icon text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Data Processing</h3>
+                            <p class="text-sm text-gray-600">Apache Spark (batch), Flink (streaming), Spring Batch</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="bg-blue-100 p-3 rounded-lg">
+                            <i class="fab fa-java text-blue-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Core Framework</h3>
+                            <p class="text-sm text-gray-600">Spring Boot (Java 17+) with reactive programming</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <i class="fas fa-database text-green-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Data Storage</h3>
+                            <p class="text-sm text-gray-600">PostgreSQL for config, Redis for caching</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="bg-orange-100 p-3 rounded-lg">
+                            <i class="fas fa-file-pdf text-orange-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Templating Engines</h3>
+                            <p class="text-sm text-gray-600">R2 (primary), iText, Flying Saucer</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Use Case Section -->
+            <section id="use-case" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Use Case: Client Investment Report</h2>
+
+                <div class="space-y-6">
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">1. Input Parameters</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <pre class="text-sm text-gray-700"><code>{
+  "reportType": "ClientInvestmentReport",
+  "clientId": "CLIENT12345",
+  "startDate": "2023-01-01",
+  "endDate": "2023-06-30",
+  "outputFormat": "PDF"
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">2. Data Retrieval</h3>
+                        <p class="text-gray-700 mb-4">Data Connector Layer fetches raw data from multiple sources:</p>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Client profile from CRM API</li>
+                            <li>• Investment portfolio from PortfolioService</li>
+                            <li>• Transaction history from TransactionService</li>
+                            <li>• Market data from FinancialDataService</li>
+                        </ul>
+                    </div>
+
+                    <div class="component-card" style="border-top: 4px solid #8b5cf6;">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">3. Data Processing</h3>
+                        <p class="text-gray-700 mb-4">Data Processing Layer transforms and enriches the raw data:</p>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Aggregates portfolio holdings across accounts</li>
+                            <li>• Calculates ROI for each investment</li>
+                            <li>• Enriches with market performance data</li>
+                            <li>• Applies GDPR-compliant masking to PII fields</li>
+                            <li>• Formats currency values consistently</li>
+                        </ul>
+                    </div>
+
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">4. Report Generation</h3>
+                        <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                            <li>Processed data sent to Templating Layer</li>
+                            <li>R2 engine merges data with report template</li>
+                            <li>Document Generator creates final PDF</li>
+                            <li>Report stored in object storage and delivered to client</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Benefits Section -->
+            <section id="benefits" class="section-spacing">
+                <h2 class="font-montserrat text-4xl font-bold text-gray-900 mb-8">Benefits & Validation</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">Architecture Benefits</h3>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• <strong>Separation of Concerns:</strong> Clear distinction between data acquisition, processing, and presentation</li>
+                            <li>• <strong>Improved Maintainability:</strong> Processing logic isolated from other components</li>
+                            <li>• <strong>Enhanced Flexibility:</strong> Custom processing without affecting templates</li>
+                            <li>• <strong>Better Performance:</strong> Optimized data structures improve templating speed</li>
+                            <li>• <strong>GDPR Compliance:</strong> Centralized data masking implementation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component-card">
+                        <h3 class="font-montserrat text-xl font-bold text-gray-900 mb-4">Validation Criteria</h3>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>✓ Support for complex data transformations</li>
+                            <li>✓ Performance at 200K reports/day</li>
+                            <li>✓ Seamless integration of new data sources</li>
+                            <li>✓ GDPR-compliant data handling</li>
+                            <li>✓ No code changes for new transformations</li>
+                            <li>✓ Error handling for data inconsistencies</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="highlight-box mt-8">
+                    <h3 class="font-montserrat text-2xl font-bold text-gray-900 mb-4">Performance Impact</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Before Processing Layer</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">With Processing Layer</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Improvement</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Report Generation Time</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">850ms avg</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">720ms avg</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">15% faster</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Template Complexity</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">High (business logic in templates)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Low (pure presentation)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">Simplified</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">GDPR Compliance</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Template-level</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Centralized processing</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">Consistent</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#1a1a1a',
+                primaryBorderColor: '#374151',
+                lineColor: '#6b7280',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#fef7ed',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8fafc',
+                tertiaryBkg: '#fef7ed',
+                primaryBorderColor: '#374151',
+                primaryTextColor: '#1a1a1a',
+                secondaryTextColor: '#374151',
+                tertiaryTextColor: '#6b7280',
+                lineColor: '#6b7280',
+                textColor: '#1a1a1a',
+                THEME_COLOR_LIMIT: 12
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            fontSize: 14,
+            fontFamily: 'Roboto, sans-serif'
+        });
+
+        // Define Mermaid diagram
+        const diagramDefinition = `
+        graph TD
+        A[Client Applications] -->|HTTP Requests| B(API Gateway)
+        B -->|Routed Requests| C[Reporting Microservice]
+        C --> D[Configuration Store]
+        C --> E[Data Connector Layer]
+        E --> F[Internal REST APIs]
+        E --> G[External REST APIs]
+        E --> H[Kafka Event Streams]
+        E --> I[Data Processing Layer]
+        I --> J[Transformations]
+        I --> K[Aggregation]
+        I --> L[Enrichment]
+        I --> M[Normalization]
+        I --> N[GDPR Masking]
+        I --> O[Templating Layer]
+        O --> P[R2 PDF Engine]
+        O --> Q[Other Engines]
+        C --> R[Document Generator]
+        R --> S[Object Storage]
+        T[Service Registry] -.- B
+        T -.- C
+        U[Identity Provider] --> B
+
+        subgraph Reporting Microservice
+        C --> V[API Layer]
+        C --> W[Execution Orchestrator]
+        V --> W
+        W --> D
+        W --> E
+        W --> I
+        W --> O
+        W --> R
+        end
+
+        classDef external fill:#f9f,stroke:#333,stroke-width:2px
+        classDef gateway fill:#ccf,stroke:#333,stroke-width:2px
+        classDef microservice fill:#cfc,stroke:#333,stroke-width:2px
+        classDef storage fill:#ffc,stroke:#333,stroke-width:2px
+        classDef component fill:#eee,stroke:#333,stroke-width:2px
+        classDef processing fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px
+
+        class A,U,F,G,H external
+        class B,T gateway
+        class C microservice
+        class D,S storage
+        class E,O,R,V,W component
+        class I,J,K,L,M,N processing
+        `;
+
+        // Render the diagram
+        const diagramElement = document.getElementById('mermaid-diagram');
+        diagramElement.innerHTML = diagramDefinition;
+        mermaid.init(undefined, diagramElement);
+
+        // Zoom functionality
+        let scale = 1;
+        const zoomStep = 0.1;
+        const minScale = 0.5;
+        const maxScale = 3;
+        
+        // Translation (panning) variables
+        let isDragging = false;
+        let startX, startY;
+        let translateX = 0, translateY = 0;
+        
+        // Get the diagram SVG element
+        const svg = diagramElement.querySelector('svg');
+        svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+        svg.style.transformOrigin = '0 0';
+        
+        // Zoom in button
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            if (scale < maxScale) {
+                scale += zoomStep;
+                svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            }
+        });
+        
+        // Zoom out button
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            if (scale > minScale) {
+                scale -= zoomStep;
+                svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            }
+        });
+        
+        // Reset zoom button
+        document.getElementById('reset-zoom').addEventListener('click', () => {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+        });
+        
+        // Full screen button
+        document.getElementById('full-screen').addEventListener('click', () => {
+            const container = document.querySelector('.mermaid-container');
+            container.classList.toggle('fullscreen');
+            
+            if (container.classList.contains('fullscreen')) {
+                document.getElementById('full-screen').innerHTML = '<i class="fas fa-compress"></i>';
+            } else {
+                document.getElementById('full-screen').innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        });
+        
+        // Panning functionality
+        diagramElement.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'svg') {
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                diagramElement.style.cursor = 'grabbing';
+            }
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            diagramElement.style.cursor = 'grab';
+        });
+        
+        // Touch events for mobile
+        diagramElement.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'svg') {
+                isDragging = true;
+                startX = e.touches[0].clientX - translateX;
+                startY = e.touches[0].clientY - translateY;
+                diagramElement.style.cursor = 'grabbing';
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                translateX = e.touches[0].clientX - startX;
+                translateY = e.touches[0].clientY - startY;
+                svg.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+            diagramElement.style.cursor = 'grab';
+        });
+
+        // TOC toggle for mobile
+        const tocToggle = document.getElementById('toc-toggle');
+        const toc = document.getElementById('toc');
+        
+        tocToggle?.addEventListener('click', () => {
+            const isOpen = toc.classList.toggle('open');
+            tocToggle.setAttribute('aria-expanded', isOpen);
+        });
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if(target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Close TOC on mobile after selection
+                    if(window.innerWidth <= 1024) {
+                        toc.classList.remove('open');
+                        tocToggle.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        });
+        
+        // Close TOC when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if(window.innerWidth > 1024) return;
+            if(!toc.contains(e.target) && !tocToggle.contains(e.target) && toc.classList.contains('open')) {
+                toc.classList.remove('open');
+                tocToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    </script>
+</body>
+</html>

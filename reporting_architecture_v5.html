@@ -391,86 +391,138 @@
               </button>
             </div>
             <div class="mermaid">
+%%{init: 
+  {
+    'theme': 'default',
+    'flowchart': {
+      'curve': 'basis',
+      'defaultRenderer': 'elk'
+    }
+  }
+}%%
 flowchart TB
-    subgraph Clients ["***Clients & External Systems***"]
-        direction TB
-        A["Client Applications"]:::external
-        O["Identity Provider"]:::external
-        R2["R2 PDF Service"]:::external
-    end
 
-    subgraph Gateway ["***Gateway Layer***"]
-        direction TB
-        B["API Gateway"]:::gateway
-    end
+  %% Class Definitions for Coloring Related Groups
+  classDef consumer fill:#eef6fb,stroke:#5BA1CF,stroke-width:2px;
+  classDef api fill:#E3F8E0,stroke:#4BB543,stroke-width:2px;
+  classDef event fill:#FFFDE4,stroke:#F4D35E,stroke-width:2px;
+  classDef process fill:#FDEDF0,stroke:#FF6783,stroke-width:2px;
+  classDef data fill:#E3E4FA,stroke:#836FFF,stroke-width:2px;
+  classDef notify fill:#F7F7F7,stroke:#B1B1B1,stroke-width:2px;
 
-    subgraph Pipeline ["***Reporting Microservice Pipeline***"]
-        direction TB
-        P["API Layer"]:::component
-        Q["Execution Orchestrator"]:::component
-        E["Data Connector Layer"]:::component
-        DPAL["Data Processing & Aggregation"]:::component
-        I["Templating Layer"]:::component
-        L["Document Generator"]:::component
-    end
+  subgraph "File Storage"
+    S3@{shape: rect, label: "🗂️ S3 (PDF Storage)"}
+  end
+  class S3 data
 
-    subgraph Storage ["***Storage Systems***"]
-        direction TB
-        D["Configuration Store (PostgreSQL)"]:::storage
-        M["Object Store (S3)"]:::storage
-    end
+  %% External Systems & Notification Channels
+  subgraph "Data Providers"
+    direction LR
+    Elastic@{shape: rect, label: "🔎 ElasticSearch"}
+    Alto@{shape: rect, label: "💼 Alto Wealth PM"}
+    Other@{shape: rect, label: "🔧 Other Bloxxx"}
+  end
+  class Elastic,Alto,Other data
 
-    subgraph DataSources ["***Data Sources***"]
-        direction TB
-        F["Internal REST APIs"]:::external
-        G["External REST APIs"]:::external
-        H["Kafka Event Streams"]:::external
-    end
+  %% API Consumer
+  subgraph " "
+    POST_REQ@{shape: stadium, label: "POST /report"}
+    GET_REQ@{shape: stadium, label: "GET /report/{id}"}
+  end
+  class POST_REQ,GET_REQ consumer
 
-    subgraph Engines ["***PDF Engines***"]
-        direction TB
-        K["Other PDF Engines (iText, FlyingSaucer)"]:::external
-    end
+  %% Reporting Services
+  subgraph "Reporting Services"
+    direction TB
+    ReportAPI@{shape: rect, label: "📨 Report API"}
+    Scheduler@{shape: fr-rect, label: "⏰ Scheduled Job Runner"}
+    ReportConsumer@{shape: rect, label: "🛠️ Report Consumer"}
+    Notifier@{shape: stadium, label: "📢 Notification Service"}
+  end
+  class ReportAPI,Notifier api
+  class Scheduler process
+  class ReportConsumer process
 
-    A eA@-- HTTP Requests --> B
-    O eO@-- Authenticates --> B
-    B eB@-- Routes --> P
-    P eP@--> Q
-    Q eQ@--> E
-    E eE@--> DPAL
-    DPAL eDPAL@--> I
-    I eI@--> L
-    L eL@-- Stores --> M
-    Q eD@-- Manages --> D
+  %% Kafka in its own subgraph
+  subgraph "🌀 Event Bus"
+    Kafka@{shape: rect, label: "Kafka(Event Broker)"}
+  end
+  class Kafka event
 
-    E eF@-- Fetches --> F
-    E eG@-- Fetches --> G
-    E eH@-- Consumes --> H
+  %% Databases & Storage
+  subgraph "Data & Config Storage"
+    direction LR
+    ReportDB@{shape: cyl, label: "📘 Report DB"}
+    Redis@{shape: cyl, label: "⚡ Redis Cache"}
+    SchedDB@{shape: cyl, label: "📅 Jobs Config"}
+  end
+  class ReportDB,Redis,SchedDB data
 
-    I eK@-- Uses --> K
-    I eR2@-- Requests --> R2
+  %% PDF Generation & File Storage
+  subgraph "PDF Generation"
+    R2API@{shape: rect, label: "📤 R2 API (Export Views)"}
+  end
+  class R2API process
 
-    eA@{ animation: fast }
-    eO@{ animation: fast }
-    eB@{ animation: fast }
-    eP@{ animation: fast }
-    eQ@{ animation: fast }
-    eE@{ animation: fast }
-    eDPAL@{ animation: fast }
-    eI@{ animation: fast }
-    eL@{ animation: fast }
-    eD@{ animation: fast }
-    eF@{ animation: fast }
-    eG@{ animation: fast }
-    eH@{ animation: fast }
-    eK@{ animation: slow }
-    eR2@{ animation: slow }
+  subgraph "Notification Channels"
+    direction LR
+    Email@{shape: stadium, label: "✉️ Email"}
+    WebSocket@{shape: stadium, label: "📡 WebSocket Push"}
+  end
+  class Email,WebSocket notify
 
-    classDef external fill:#E6E6FA,stroke:#333,stroke-width:2px,color:#000
-    classDef gateway fill:#D4EDDA,stroke:#333,stroke-width:2px,color:#000
-    classDef microservice fill:#CDECFC,stroke:#333,stroke-width:2px,color:#000
-    classDef storage fill:#FFF3CD,stroke:#333,stroke-width:2px,color:#000
-    classDef component fill:#F8D7DA,stroke:#333,stroke-width:2px,color:#000
+  %% Main Flow
+  POST_REQ e1@--> |"202 Accepted + ID"| ReportAPI
+  GET_REQ e2@--> |"Poll Status"| ReportAPI
+
+  ReportAPI e3@--> |"Register Request"| ReportDB
+  ReportAPI e4@--> |"Check Status"| ReportDB
+  ReportAPI e5@--> |"Check Cache"| Redis
+  ReportAPI e6@--> |"Publish Event"| Kafka
+
+  Scheduler e7@--> |"Read Configs"| SchedDB
+  Scheduler e8@--> |"Publish Event"| Kafka
+
+  Kafka e9@--> |"Consume Event"| ReportConsumer
+
+  ReportConsumer e10@--> |"Fetch Request"| ReportDB
+  ReportConsumer e11@--> |"Fetch Data"| Elastic
+  ReportConsumer e12@--> |"Fetch Data"| Alto
+  ReportConsumer e13@--> |"Fetch Data"| Other
+  ReportConsumer e14@--> |"Generate PDF"| R2API
+  R2API e15@--> |"Return PDF"| ReportConsumer
+  ReportConsumer e16@--> |"Upload to S3"| S3
+  ReportConsumer e17@--> |"Update Status"| ReportDB
+  ReportConsumer e19@--> |"Notify"| Notifier
+
+  Notifier e20@--> |"Email"| Email
+  Notifier e21@--> |"Push"| WebSocket
+
+  GET_REQ e18@--> |"200 OK S3 URL"| S3
+
+  %% Animate edges
+  e1@{ animate: true }
+  e2@{ animate: true }
+  e3@{ animate: true }
+  e4@{ animate: true }
+  e5@{ animate: true }
+  e6@{ animate: true }
+  e7@{ animate: true }
+  e8@{ animate: true }
+  e9@{ animate: true }
+  e10@{ animate: true }
+  e11@{ animate: true }
+  e12@{ animate: true }
+  e13@{ animate: true }
+  e14@{ animate: true }
+  e15@{ animate: true }
+  e16@{ animate: true }
+  e17@{ animate: true }
+  e18@{ animate: true }
+  e19@{ animate: true }
+  e20@{ animate: true }
+  e21@{ animate: true }
+
 
             </div>
           </div>

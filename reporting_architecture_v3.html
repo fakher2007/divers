@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Modular Reporting Microservice Architecture (Framework-Agnostic)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Canela:wght@300;400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        .font-canela { font-family: 'Canela', serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        img { max-width: 100%; }
+        .hero-gradient {
+            background: linear-gradient(135deg, #f5f5f0 0%, #e8e6e1 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #1a1a1a 0%, #4a5568 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: #fafaf9;
+            border-right: 1px solid #e5e5e5;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+        }
+        .content-offset {
+            margin-left: 280px;
+        }
+        .section-spacing {
+            margin-bottom: 4rem;
+        }
+        .citation-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        .citation-link:hover {
+            border-bottom-color: #2563eb;
+        }
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        .component-card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .component-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #fef7ed 0%, #fed7aa 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        .tech-stack-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: background-color 0.2s ease;
+        }
+        .tech-stack-item:hover {
+            background: #e2e8f0;
+        }
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* NEW: Framework independence styles */
+        .constraint-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        .adr-constraint {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #93C5FD;
+        }
+        .framework-badge {
+            background-color: #FCE7F3;
+            color: #9D174D;
+            border: 1px solid #FBCFE8;
+        }
+        .core-principle {
+            border-left: 4px solid #10B981;
+            background-color: #ECFDF5;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .adr-compliance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .adr-compliance-table th, .adr-compliance-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .adr-compliance-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-implemented {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+        .status-in-progress {
+            background-color: #BFDBFE;
+            color: #1E40AF;
+        }
+        .status-pending {
+            background-color: #FEEBC8;
+            color: #92400E;
+        }
+
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .toc-fixed.open {
+                transform: translateX(0);
+            }
+            .content-offset {
+                margin-left: 0;
+            }
+            .architecture-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-inter">
+    <!-- Table of Contents -->
+    <nav class="toc-fixed" id="toc">
+      <div class="mb-8">
+        <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Contents</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#overview" class="citation-link hover:text-blue-700">Overview</a></li>
+          <li><a href="#architecture" class="citation-link hover:text-blue-700">High-Level Architecture</a></li>
+          <li><a href="#framework-independence" class="citation-link hover:text-blue-700">Framework Independence</a></li>
+          <li><a href="#components" class="citation-link hover:text-blue-700">Component Breakdown</a></li>
+          <li><a href="#tech-stack" class="citation-link hover:text-blue-700">Technology Stack</a></li>
+          <li><a href="#adr-compliance" class="citation-link hover:text-blue-700">ADR Compliance</a></li>
+          <li><a href="#validation" class="citation-link hover:text-blue-700">Validation Criteria</a></li>
+          <li><a href="#migration-path" class="citation-link hover:text-blue-700">Migration Pathway</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Toggle button for TOC on mobile -->
+    <button id="toc-toggle" class="fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg md:hidden">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="content-offset">
+      <!-- Hero Section -->
+      <section class="hero-gradient min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-16">
+          <div class="flex flex-col md:grid md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8">
+              <div class="space-y-4">
+                <h1 class="font-canela text-4xl md:text-5xl lg:text-6xl font-bold text-gradient leading-tight">
+                  Framework-Agnostic Reporting Microservice
+                  <span class="framework-badge constraint-badge">Spring Boot → Quarkus</span>
+                </h1>
+                <p class="text-lg md:text-xl text-gray-600 leading-relaxed">
+                  A modular, extensible reporting platform designed for seamless framework migration
+                  with zero business logic changes
+                </p>
+              </div>
+
+              <!-- Key Highlights Grid -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-blue-600">200K</div>
+                  <div class="text-sm text-gray-600">Reports per day</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-green-600">Zero</div>
+                  <div class="text-sm text-gray-600">Core changes for migration</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-purple-600">ADR</div>
+                  <div class="text-sm text-gray-600">Compliant design</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                  <div class="text-2xl font-bold text-orange-600">Hex</div>
+                  <div class="text-sm text-gray-600">Ports & Adapters</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" 
+                   alt="Framework-agnostic microservices architecture" 
+                   class="w-full rounded-2xl shadow-2xl"/>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content Sections -->
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-16 space-y-16">
+
+        <!-- Overview Section -->
+        <section id="overview" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Overview</h2>
+
+          <div class="prose prose-lg max-w-none">
+            <p class="text-xl text-gray-700 leading-relaxed mb-8">
+              The reporting microservice is designed with framework independence as a core principle,
+              enabling seamless migration from Spring Boot to Quarkus or other frameworks without
+              modifying business logic. The architecture strictly follows ADR constraints through
+              hexagonal architecture and interface-based design.
+            </p>
+
+            <div class="core-principle">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-2">Framework Independence Core Principles</h3>
+              <ul class="text-gray-700">
+                <li>• <strong>Strict separation</strong> between business logic and framework implementations</li>
+                <li>• All framework dependencies isolated to <strong>adapter layers</strong></li>
+                <li>• Core domain uses <strong>pure Java interfaces</strong> (JSR-330)</li>
+                <li>• Build-time decoupling with <strong>module separation</strong></li>
+                <li>• Standardized contracts for all external integrations</li>
+              </ul>
+            </div>
+
+            <h3 class="font-canela text-2xl font-bold text-gray-900 mt-8 mb-4">Non-Functional Requirements</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Framework Agnosticism 
+                  <span class="adr-constraint constraint-badge">ADR-8</span>
+                </h4>
+                <p class="text-gray-600 text-sm">Core business logic completely decoupled from Spring Boot using Hexagonal Architecture.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Explicit Interfaces 
+                  <span class="adr-constraint constraint-badge">ADR-2</span>
+                </h4>
+                <p class="text-gray-600 text-sm">All cross-service communication via well-defined contracts (OpenAPI, Avro schemas).</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Kafka Integration 
+                  <span class="adr-constraint constraint-badge">ADR-25,26</span>
+                </h4>
+                <p class="text-gray-600 text-sm">Asynchronous messaging with Avro schema versioning for all events.</p>
+              </div>
+              <div class="component-card">
+                <h4 class="font-bold text-gray-900 mb-2">Security 
+                  <span class="adr-constraint constraint-badge">ADR-4,5</span>
+                </h4>
+                <p class="text-gray-600 text-sm">JWT-based authentication with framework-agnostic core security service.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">High-Level Architecture</h2>
+
+          <div class="mb-8">
+            <p class="text-lg text-gray-700 leading-relaxed">
+              The architecture implements Hexagonal Architecture (Ports & Adapters) to achieve framework independence.
+              All framework-specific code is isolated to adapter layers, while the core domain remains pure Java.
+            </p>
+          </div>
+
+          <!-- Architecture Diagram -->
+          <div class="mermaid-container">
+            <div class="mermaid">
+flowchart TB
+    subgraph Frameworks["***Framework Adapters***"]
+        direction TB
+        Spring["Spring Boot Adapters"]:::adapter
+        Quarkus["Quarkus Adapters"]:::adapter
+    end
+    
+    subgraph Core["***Framework-Agnostic Core***"]
+        direction TB
+        Domain[Domain Model]:::core
+        Services[Business Services]:::core
+        Ports[Application Ports]:::core
+    end
+    
+    subgraph External["***External Systems***"]
+        direction TB
+        DB[(Database)]:::external
+        Kafka[(Kafka)]:::external
+        R2["R2 PDF Service"]:::external
+    end
+    
+    Spring <-.->|Implements| Ports
+    Quarkus <-.->|Implements| Ports
+    Ports <--> Services
+    Services <--> Domain
+    Ports <-->|Interface| DB
+    Ports <-->|Interface| Kafka
+    Ports <-->|Interface| R2
+    
+    classDef core fill:#D4F4E2,stroke:#333,stroke-width:2px,color:#000
+    classDef adapter fill:#FEEBC8,stroke:#333,stroke-width:2px,color:#000
+    classDef external fill:#E6E6FA,stroke:#333,stroke-width:2px,color:#000
+            </div>
+          </div>
+
+          <div class="architecture-grid mt-8">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">
+                Framework-Agnostic Core
+                <span class="adr-constraint constraint-badge">ADR-8</span>
+              </h3>
+              <p class="text-gray-600">Pure Java business logic with no framework dependencies. Contains domain model, business services, and interface definitions.</p>
+              <div class="mt-4">
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-green-600 bg-green-100">Java 17+</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-blue-600 bg-blue-100">JSR-330</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-purple-600 bg-purple-100">Avro</span>
+              </div>
+            </div>
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">
+                Spring Boot Adapters
+                <span class="framework-badge constraint-badge">Current</span>
+              </h3>
+              <p class="text-gray-600">Implements core interfaces using Spring-specific technologies. Can be replaced without modifying core business logic.</p>
+              <div class="mt-4">
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-blue-600 bg-blue-100">Spring Boot</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-green-600 bg-green-100">Spring Data</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-red-600 bg-red-100">Spring Security</span>
+              </div>
+            </div>
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">
+                Quarkus Adapters
+                <span class="framework-badge constraint-badge">Future</span>
+              </h3>
+              <p class="text-gray-600">Alternative implementation of core interfaces using Quarkus. Enables future migration with minimal effort.</p>
+              <div class="mt-4">
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-red-600 bg-red-100">Quarkus</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-yellow-600 bg-yellow-100">Panache</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-blue-600 bg-blue-100">RESTEasy</span>
+              </div>
+            </div>
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">
+                External Integrations
+                <span class="adr-constraint constraint-badge">ADR-25,26</span>
+              </h3>
+              <p class="text-gray-600">All external systems accessed through standardized interfaces. Kafka communication uses Avro schemas for versioning.</p>
+              <div class="mt-4">
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-gray-600 bg-gray-100">PostgreSQL</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-purple-600 bg-purple-100">Kafka</span>
+                <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-orange-600 bg-orange-100">R2</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Framework Independence Section -->
+        <section id="framework-independence" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Framework Independence Strategy</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Hexagonal Architecture
+                <span class="adr-constraint constraint-badge">ADR-22</span>
+              </h3>
+              <p class="text-gray-600 mb-4">Strict separation between business core and framework implementations:</p>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Core domain in <code>com.reporting.core</code> package</li>
+                <li>• Spring adapters in <code>com.reporting.spring</code></li>
+                <li>• Quarkus adapters in <code>com.reporting.quarkus</code></li>
+                <li>• Dependencies flow inward only</li>
+              </ul>
+              <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>// Core interface (framework-agnostic)
+public interface ReportGenerator {
+    Report generate(ReportRequest request);
+}
+
+// Spring adapter
+@Repository
+public class SpringReportGenerator implements ReportGenerator {
+    // Spring-specific code
+}
+
+// Quarkus adapter
+@ApplicationScoped
+public class QuarkusReportGenerator implements ReportGenerator {
+    // Quarkus-specific code
+}</code></pre>
+              </div>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Build & Deployment
+                <span class="adr-constraint constraint-badge">ADR-30,31</span>
+              </h3>
+              <p class="text-gray-600 mb-4">Helm-based deployment with framework selection:</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code># values.yaml
+framework:
+  implementation: spring # or 'quarkus'
+  
+# deployment.yaml
+image: "{{ .Values.image.repository }}-{{ .Values.framework.implementation }}"
+
+# build.gradle (core module)
+dependencies {
+    // No framework dependencies
+}
+
+# build.gradle (spring module)
+dependencies {
+    implementation project(':core')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}</code></pre>
+              </div>
+              <p class="text-sm text-gray-600 mt-4">Module structure ensures framework dependencies never leak into core business logic.</p>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Interface Contracts
+                <span class="adr-constraint constraint-badge">ADR-2,8</span>
+              </h3>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Public APIs in <code>*.api</code> packages</li>
+                <li>• REST interfaces with OpenAPI 3.0 specs</li>
+                <li>• Kafka messages with Avro schemas</li>
+                <li>• JSR-330 dependency injection</li>
+              </ul>
+              <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>// JSR-330 standard DI
+import javax.inject.Inject;
+import javax.inject.Named;
+
+public class ReportService {
+    private final ReportGenerator generator;
+    
+    @Inject
+    public ReportService(@Named("${report.generator.impl}") 
+                         ReportGenerator generator) {
+        this.generator = generator;
+    }
+}</code></pre>
+              </div>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Observability
+                <span class="adr-constraint constraint-badge">ADR-10</span>
+              </h3>
+              <p class="text-gray-600 mb-2">Standardized logging and metrics collection:</p>
+              <ul class="text-sm text-gray-600 space-y-1">
+                <li>• JSON log format with mandatory tags</li>
+                <li>• Framework-agnostic telemetry interface</li>
+                <li>• Adapter implementations for Micrometer/Quarkus</li>
+              </ul>
+              <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>public interface Telemetry {
+    void recordMetric(String name, double value);
+    void logEvent(String eventType, Map&lt;String,String&gt; context);
+}
+
+// Spring implementation
+@Component
+public class SpringTelemetry implements Telemetry {
+    private final MeterRegistry registry;
+    // ...
+}
+
+// Quarkus implementation
+@ApplicationScoped
+public class QuarkusTelemetry implements Telemetry {
+    @Inject MeterRegistry registry;
+    // ...
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Component Breakdown -->
+        <section id="components" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Component Breakdown</h2>
+        
+          <div class="space-y-8">
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">
+                API Layer
+                <span class="adr-constraint constraint-badge">ADR-2</span>
+              </h3>
+              <p class="text-gray-700 mb-4">Primary interface for external communication, built using JAX-RS standard annotations for framework independence.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>@Path("/reports")
+@Produces(MediaType.APPLICATION_JSON)
+public class ReportResource {
+
+    @Inject ReportService service;
+    
+    @POST
+    public Response generate(ReportRequest request) {
+        return Response.ok(service.generate(request)).build();
+    }
+}</code></pre>
+              </div>
+            </div>
+          
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">
+                Execution Orchestrator
+                <span class="adr-constraint constraint-badge">ADR-3</span>
+              </h3>
+              <p class="text-gray-700 mb-4">Central coordinating component managing the end-to-end report generation workflow with framework-agnostic state management.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>public interface ReportOrchestrator {
+    ReportJob startJob(ReportRequest request);
+    ReportJobStatus checkStatus(UUID jobId);
+}
+
+// Spring transaction management abstracted
+public class TransactionTemplate {
+    public &lt;T&gt; T execute(TransactionCallback&lt;T&gt; action) {
+        // Delegates to framework-specific TX manager
+    }
+}</code></pre>
+              </div>
+            </div>
+          
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">
+                Data Connector Layer
+                <span class="adr-constraint constraint-badge">ADR-25</span>
+              </h3>
+              <p class="text-gray-700 mb-4">Abstracts data retrieval from diverse sources using interface-based design with circuit breaker pattern.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>public interface DataConnector {
+    DataResult fetch(DataRequest request);
+}
+
+// Spring implementation
+@Repository
+public class SpringWebClientConnector implements DataConnector {
+    private final WebClient webClient;
+    // ...
+}
+
+// Quarkus implementation
+@ApplicationScoped
+public class QuarkusRestClientConnector implements DataConnector {
+    @Inject RestClient restClient;
+    // ...
+}</code></pre>
+              </div>
+            </div>
+          
+            <div class="component-card">
+              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">
+                Security Layer
+                <span class="adr-constraint constraint-badge">ADR-4,5</span>
+              </h3>
+              <p class="text-gray-700 mb-4">JWT-based authentication with framework-agnostic core security service.</p>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <pre class="text-sm text-gray-700"><code>public interface SecurityContext {
+    UserPrincipal getAuthenticatedUser();
+    boolean hasRole(String role);
+}
+
+// Spring adapter
+@Component
+public class SpringSecurityContext implements SecurityContext {
+    private final JwtDecoder decoder;
+    // ...
+}
+
+// Quarkus adapter
+@ApplicationScoped
+public class QuarkusSecurityContext implements SecurityContext {
+    @Inject JsonWebToken jwt;
+    // ...
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Technology Stack -->
+        <section id="tech-stack" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Technology Stack</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Framework-Agnostic Core</h3>
+              <div class="space-y-4">
+                <div class="tech-stack-item">
+                  <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fab fa-java text-green-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Java 17+</h3>
+                    <p class="text-sm text-gray-600">Language runtime</p>
+                  </div>
+                </div>
+                <div class="tech-stack-item">
+                  <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-code text-blue-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">JSR-330</h3>
+                    <p class="text-sm text-gray-600">Dependency injection standard</p>
+                  </div>
+                </div>
+                <div class="tech-stack-item">
+                  <div class="bg-purple-100 p-3 rounded-lg">
+                    <i class="fas fa-file-contract text-purple-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Avro</h3>
+                    <p class="text-sm text-gray-600">Schema-based messaging</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Spring Adapter Layer</h3>
+              <div class="space-y-4">
+                <div class="tech-stack-item">
+                  <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-leaf text-blue-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Spring Boot 3.x</h3>
+                    <p class="text-sm text-gray-600">Current framework</p>
+                  </div>
+                </div>
+                <div class="tech-stack-item">
+                  <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-database text-green-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Spring Data JPA</h3>
+                    <p class="text-sm text-gray-600">Persistence adapter</p>
+                  </div>
+                </div>
+                <div class="tech-stack-item">
+                  <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="fas fa-shield-alt text-red-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Spring Security</h3>
+                    <p class="text-sm text-gray-600">Authentication adapter</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Quarkus Adapter Layer</h3>
+              <div class="space-y-4">
+                <div class="tech-stack-item">
+                  <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="fas fa-bolt text-red-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Quarkus</h3>
+                    <p class="text-sm text-gray-600">Future runtime</p>
+                  </div>
+                </div>
+                <div class="tech-stack-item">
+                  <div class="bg-yellow-100 p-3 rounded-lg">
+                    <i class="fas fa-plug text-yellow-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">RESTEasy</h3>
+                    <p class="text-sm text-gray-600">JAX-RS implementation</p>
+                  </div>
+                </div>
+                <div class="tech-stack-item">
+                  <div class="bg-purple-100 p-3 rounded-lg">
+                    <i class="fas fa-database text-purple-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-gray-900">Hibernate Panache</h3>
+                    <p class="text-sm text-gray-600">Persistence adapter</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ADR Compliance Section -->
+        <section id="adr-compliance" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">ADR Compliance</h2>
+          
+          <div class="overflow-x-auto">
+            <table class="adr-compliance-table">
+              <thead>
+                <tr>
+                  <th>ADR</th>
+                  <th>Compliance Mechanism</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-medium">ADR-2: Explicit Interfaces</td>
+                  <td>OpenAPI specs, Avro schemas, Java interfaces</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-4: Service Roles</td>
+                  <td>JWT claims with service identity</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-5: Request Authentication</td>
+                  <td>TLS + JWS in Authorization header</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-8: Public APIs</td>
+                  <td>*.api packages, JSR-330 DI</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-10: Log Tagging</td>
+                  <td>JSON logs with standard tags</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-22: Information Hiding</td>
+                  <td>Hexagonal architecture</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-25: Kafka Integration</td>
+                  <td>Avro schemas, core messaging interfaces</td>
+                  <td><span class="status-badge status-implemented">Implemented</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-26: Avro Schemata</td>
+                  <td>Schema registry integration</td>
+                  <td><span class="status-badge status-in-progress">In Progress</span></td>
+                </tr>
+                <tr>
+                  <td class="font-medium">ADR-30: Helm Packaging</td>
+                  <td>Framework-selection in values.yaml</td>
+                  <td><span class="status-badge status-in-progress">In Progress</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Validation Criteria -->
+        <section id="validation" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Validation Criteria</h2>
+          
+          <div class="space-y-6">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Framework Independence
+                <span class="adr-constraint constraint-badge">ADR-8,22</span>
+              </h3>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Core module compiles without Spring dependencies</li>
+                <li>• Adapter interfaces cover 100% of framework interactions</li>
+                <li>• Quarkus adapter implementation exists for all ports</li>
+                <li>• Identical test results with both adapter implementations</li>
+              </ul>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Interface Contracts
+                <span class="adr-constraint constraint-badge">ADR-2,8</span>
+              </h3>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• All public APIs documented with OpenAPI</li>
+                <li>• Kafka messages validate against Avro schemas</li>
+                <li>• No framework types in public method signatures</li>
+                <li>• JSR-330 used for all dependency injection</li>
+              </ul>
+            </div>
+
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">
+                Build & Deployment
+                <span class="adr-constraint constraint-badge">ADR-30,31</span>
+              </h3>
+              <ul class="text-sm text-gray-600 space-y-2">
+                <li>• Core module has no framework dependencies</li>
+                <li>• Adapter modules depend only on core + framework</li>
+                <li>• Helm charts support framework selection</li>
+                <li>• CI/CD pipeline builds both adapter variants</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Migration Pathway -->
+        <section id="migration-path" class="section-spacing">
+          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Migration Pathway</h2>
+          
+          <div class="space-y-6">
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Phase 1: Parallel Implementation</h3>
+              <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>Implement Quarkus adapters alongside Spring</li>
+                <li>Verify identical behavior through contract tests</li>
+                <li>Deploy both variants in test environment</li>
+              </ol>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Phase 2: Canary Release</h3>
+              <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>Route small percentage of traffic to Quarkus</li>
+                <li>Monitor performance and stability</li>
+                <li>Gradually increase traffic percentage</li>
+              </ol>
+            </div>
+            
+            <div class="component-card">
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Phase 3: Full Migration</h3>
+              <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>Retire Spring adapters</li>
+                <li>Update Helm charts to default to Quarkus</li>
+                <li>Maintain Spring branch for emergency rollback</li>
+              </ol>
+            </div>
+          </div>
+          
+          <div class="highlight-box mt-8">
+            <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Migration Readiness Checklist</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-bold text-gray-900 mb-2">Technical Prerequisites</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>✓ All ADRs implemented</li>
+                  <li>✓ Quarkus adapters passing tests</li>
+                  <li>✓ Performance benchmarks completed</li>
+                </ul>
+              </div>
+              <div>
+                <h4 class="font-bold text-gray-900 mb-2">Operational Readiness</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li>✓ Monitoring dashboards updated</li>
+                  <li>✓ Runbooks adapted for Quarkus</li>
+                  <li>✓ Rollback procedure documented</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize Mermaid with custom configuration
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#1a1a1a',
+                primaryBorderColor: '#374151',
+                lineColor: '#6b7280',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#fef7ed',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8fafc',
+                tertiaryBkg: '#fef7ed',
+                primaryBorderColor: '#374151',
+                primaryTextColor: '#1a1a1a',
+                secondaryTextColor: '#374151',
+                tertiaryTextColor: '#6b7280',
+                lineColor: '#6b7280',
+                textColor: '#1a1a1a',
+                coreBkg: '#D4F4E2',
+                adapterBkg: '#FEEBC8',
+                THEME_COLOR_LIMIT: 12
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            fontSize: 14,
+            fontFamily: 'Inter, sans-serif'
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // Touch-related state
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return;
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // Get the distance between two points
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - Touch event handling
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // Single-finger drag
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // Double-finger zoom
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // Single-finger drag
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // Double-finger zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // Reset state
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // Delay reset isTouch to avoid immediate mouse events
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // Switch from double-finger to single-finger, switch to drag mode
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize Mermaid
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'base',
+                themeVariables: {
+                    primaryColor: '#ffffff',
+                    primaryTextColor: '#1a1a1a',
+                    primaryBorderColor: '#374151',
+                    lineColor: '#6b7280',
+                    secondaryColor: '#f8fafc',
+                    tertiaryColor: '#fef7ed',
+                    background: '#ffffff',
+                    mainBkg: '#ffffff',
+                    secondBkg: '#f8fafc',
+                    tertiaryBkg: '#fef7ed',
+                    primaryBorderColor: '#374151',
+                    primaryTextColor: '#1a1a1a',
+                    secondaryTextColor: '#374151',
+                    tertiaryTextColor: '#6b7280',
+                    lineColor: '#6b7280',
+                    textColor: '#1a1a1a',
+                    coreBkg: '#D4F4E2',
+                    adapterBkg: '#FEEBC8',
+                    THEME_COLOR_LIMIT: 12
+                },
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: true,
+                    curve: 'basis',
+                    padding: 20
+                },
+                fontSize: 14,
+                fontFamily: 'Inter, sans-serif'
+            });
+
+            // Wait for mermaid to render, then initialize controls
+            setTimeout(initializeMermaidControls, 1000);
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Toggle TOC on mobile
+        document.getElementById('toc-toggle').addEventListener('click', function() {
+            const toc = document.getElementById('toc');
+            toc.classList.toggle('open');
+        });
+
+        // Close TOC when clicking on a link (mobile)
+        document.querySelectorAll('#toc a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 1024) {
+                    const toc = document.getElementById('toc');
+                    toc.classList.remove('open');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

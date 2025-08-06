@@ -236,7 +236,7 @@
             <a href="#architecture" class="citation-link hover:text-blue-700">High-Level Architecture</a>
           </li>
           <li>
-            <a href="#components" class="citation-link hover:text-blue-700">Reporting microservice Breakdown</a>
+            <a href="#components" class="citation-link hover:text-blue-700">Component Breakdown</a>
           </li>
           <li>
             <a href="#low-code" class="citation-link hover:text-blue-700">Low-Code Integration</a>
@@ -346,7 +346,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="component-card">
                 <h4 class="font-bold text-gray-900 mb-2">Extensibility</h4>
-                <p class="text-gray-600 text-sm">New report types, data sources, and templates can be added with minimal to no code changes through robust configuration management and pluggable architecture.</p>
+                <p class="text-gray-600 text-sm">New report types, data sources, and templates can be added with minimal to no code changes through robust configuration management and pluggable architecture <a href="https://www.redwood.com/article/power-of-extensibility-end-to-end-automation-solutions/" class="citation-link" target="_blank">[4]</a>.</p>
               </div>
               <div class="component-card">
                 <h4 class="font-bold text-gray-900 mb-2">Modularity</h4>
@@ -354,11 +354,11 @@
               </div>
               <div class="component-card">
                 <h4 class="font-bold text-gray-900 mb-2">Pluggability</h4>
-                <p class="text-gray-600 text-sm">Plug-and-play model for key components using Strategy pattern or Service Provider Interface (SPI).</p>
+                <p class="text-gray-600 text-sm">Plug-and-play model for key components using Strategy pattern or Service Provider Interface (SPI) <a href="https://link.springer.com/chapter/10.1007/978-3-031-78456-9_18" class="citation-link" target="_blank">[9]</a>.</p>
               </div>
               <div class="component-card">
                 <h4 class="font-bold text-gray-900 mb-2">Scalability</h4>
-                <p class="text-gray-600 text-sm">Stateless design capable of handling 200,000 reports daily through horizontal scaling with Kubernetes.</p>
+                <p class="text-gray-600 text-sm">Stateless design capable of handling 200,000 reports daily through horizontal scaling with Kubernetes <a href="https://moldstud.com/articles/p-kafka-and-kubernetes-for-scalable-microservices" class="citation-link" target="_blank">[36]</a>.</p>
               </div>
             </div>
           </div>
@@ -370,7 +370,7 @@
 
           <div class="mb-8">
             <p class="text-lg text-gray-700 leading-relaxed">
-              The architecture emphasizes loose coupling between components, allowing for independent development, deployment, and scaling. A key element is the API Gateway, which serves as the single entry point for all client requests, handling routing, authentication, authorization, and load balancing.
+              The architecture emphasizes loose coupling between components, allowing for independent development, deployment, and scaling. A key element is the API Gateway, which serves as the single entry point for all client requests, handling routing, authentication, authorization, and load balancing <a href="https://dev.to/ayshriv/building-scalable-microservices-with-java-spring-boot-best-practices-and-techniques-part-2-3ld1" class="citation-link" target="_blank">[85]</a>.
             </p>
           </div>
 
@@ -391,120 +391,73 @@
               </button>
             </div>
             <div class="mermaid">
-flowchart TB
-    subgraph Clients ["***Clients & External Systems***"]
-        direction TB
-        A["Client Applications"]:::external
-        O["Identity Provider"]:::external
-        R2["R2 PDF Service"]:::external
-    end
+              graph TD
+              A[Client Applications] -->|HTTP Requests| B(API Gateway);
+              B -->|Routed Requests| C[Reporting Microservice];
+              C --> D[Configuration Store e.g.PostgreSQL];
+              C --> E[Data Connector Layer];
+              E --> F[Internal REST APIs];
+              E --> G[External REST APIs];
+              E --> H[Kafka Event Streams];
+              C --> DPAL[Data Processing & Aggregation Layer]
+              E --> DPAL;
+              DPAL --> I[Templating Layer];
+              C --> I[Templating Layer];
+              I --> J[R2 PDF Engine];
+              I --> K[Other PDF Engines e.g.iTextFlyingSaucer];
+              C --> L[Document Generator Layer];
+              L --> M[Object Store e.g.S3];
+              N[Service Registry e.g.Eureka] -.-> B;
+              N -.-> C;
+              O[Identity Provider] --> B;
 
-    subgraph Gateway ["***Gateway Layer***"]
-        direction TB
-        B["API Gateway"]:::gateway
-    end
+              subgraph Reporting Microservice Internal Components
+              C --> P[API Layer];
+              C --> Q[Execution Orchestrator];
+              P --> Q;
+              Q --> D;
+              Q --> E;
+              Q --> DPAL;
+              Q --> I;
+              Q --> L;
+              end
 
-    subgraph Pipeline ["***Reporting Microservice Pipeline***"]
-        direction TB
-        P["API Layer"]:::component
-        Q["Execution Orchestrator"]:::component
-        E["Data Connector Layer"]:::component
-        DPAL["Data Processing & Aggregation"]:::component
-        I["Templating Layer"]:::component
-        L["Document Generator"]:::component
-    end
+              classDef external fill:#f9f,stroke:#333,stroke-width:2px;
+              classDef gateway fill:#ccf,stroke:#333,stroke-width:2px;
+              classDef microservice fill:#cfc,stroke:#333,stroke-width:2px;
+              classDef storage fill:#ffc,stroke:#333,stroke-width:2px;
+              classDef component fill:#eee,stroke:#333,stroke-width:2px;
 
-    subgraph Storage ["***Storage Systems***"]
-        direction TB
-        D["Configuration Store (PostgreSQL)"]:::storage
-        M["Object Store (S3)"]:::storage
-    end
-
-    subgraph DataSources ["***Data Sources***"]
-        direction TB
-        F["Internal REST APIs"]:::external
-        G["External REST APIs"]:::external
-        H["Kafka Event Streams"]:::external
-    end
-
-    subgraph Engines ["***PDF Engines***"]
-        direction TB
-        K["Other PDF Engines (iText, FlyingSaucer)"]:::external
-    end
-
-    A eA@-- HTTP Requests --> B
-    O eO@-- Authenticates --> B
-    B eB@-- Routes --> P
-    P eP@--> Q
-    Q eQ@--> E
-    E eE@--> DPAL
-    DPAL eDPAL@--> I
-    I eI@--> L
-    L eL@-- Stores --> M
-    Q eD@-- Manages --> D
-
-    E eF@-- Fetches --> F
-    E eG@-- Fetches --> G
-    E eH@-- Consumes --> H
-
-    I eK@-- Uses --> K
-    I eR2@-- Requests --> R2
-
-    eA@{ animation: fast }
-    eO@{ animation: fast }
-    eB@{ animation: fast }
-    eP@{ animation: fast }
-    eQ@{ animation: fast }
-    eE@{ animation: fast }
-    eDPAL@{ animation: fast }
-    eI@{ animation: fast }
-    eL@{ animation: fast }
-    eD@{ animation: fast }
-    eF@{ animation: fast }
-    eG@{ animation: fast }
-    eH@{ animation: fast }
-    eK@{ animation: slow }
-    eR2@{ animation: slow }
-
-    classDef external fill:#E6E6FA,stroke:#333,stroke-width:2px,color:#000
-    classDef gateway fill:#D4EDDA,stroke:#333,stroke-width:2px,color:#000
-    classDef microservice fill:#CDECFC,stroke:#333,stroke-width:2px,color:#000
-    classDef storage fill:#FFF3CD,stroke:#333,stroke-width:2px,color:#000
-    classDef component fill:#F8D7DA,stroke:#333,stroke-width:2px,color:#000
-
+              class A,O,F,G,H external;
+              class B,N gateway;
+              class C microservice;
+              class D,M storage;
+              class E,I,L,P,Q,DPAL component;
             </div>
           </div>
 
           <div class="architecture-grid mt-8">
             <div class="component-card">
-              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Clients & External Systems</h3>
-              <p class="text-gray-600">This category includes the Client Applications that initiate report requests, an Identity Provider for user authentication, and the R2 PDF Service, an external tool for specialized document generation.</p>
-            </div>
-            <div class="component-card">
-              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Gateway Layer</h3>
-              <p class="text-gray-600">The API Gateway serves as the system's single entry point, handling incoming client requests. It manages authentication, verifies identities with the Identity Provider, and routes requests to the correct internal services.</p>
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">API Gateway</h3>
+              <p class="text-gray-600">Single entry point handling routing, authentication, authorization, SSL termination, and load balancing. Centralizes cross-cutting concerns and shields internal services.</p>
             </div>
             <div class="component-card">
               <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Reporting Microservice</h3>
-              <p class="text-gray-600">This is the core of the system, a sequence of microservices that work together to produce a report. The pipeline includes the API Layer, Execution Orchestrator, Data Connector Layer, Data Processing & Aggregation service, Templating Layer, and Document Generator.</p>
+              <p class="text-gray-600">Core service encapsulating report generation functionality with internal modular layers and RESTful API exposed to clients.</p>
             </div>
             <div class="component-card">
-              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Storage Systems</h3>
-              <p class="text-gray-600">This section describes the system's storage solutions. A Configuration Store (PostgreSQL) holds report rules, while an Object Store (S3) is used to store the final generated documents, such as PDFs.</p>
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Configuration Store</h3>
+              <p class="text-gray-600">Persists metadata and configurations for reports, templates, and data sources, typically using PostgreSQL for structured storage.</p>
             </div>
             <div class="component-card">
-              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">Data Sources</h3>
-              <p class="text-gray-600">These are the sources of information used by the pipeline. Data is fetched from Internal & External REST APIs and Kafka Event Streams.</p>
-            </div>
-            <div class="component-card">
-              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">PDF Engines</h3>
-              <p class="text-gray-600">These are the tools used to create documents. The Templating Layer can use Other PDF Engines or the external R2 PDF Service to generate complex or customized PDFs.</p>
+              <h3 class="font-canela text-xl font-bold text-gray-900 mb-3">External Systems</h3>
+              <p class="text-gray-600">Diverse data sources including REST APIs, Kafka event streams, and specialized services like Amundi's R2 for PDF generation <a href="https://blog.stackademic.com/handling-reporting-on-microservices-architecture-d0fac47e9ece" class="citation-link" target="_blank">[176]</a>.</p>
             </div>
           </div>
         </section>
 
         <!-- Component Breakdown -->
-        <!--<section id="components" class="section-spacing">
+        <section id="components" class="section-spacing">
           <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Component Breakdown</h2>
 
           <div class="space-y-8">
@@ -587,92 +540,7 @@ flowchart TB
               </div>
             </div>
           </div>
-        </section> -->
-        
-        <!-- Reporting microservice Breakdown -->
-        <section id="components" class="section-spacing">
-          <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Reporting microservice Breakdown</h2>
-        
-          <div class="space-y-8">
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">API Layer</h3>
-              <p class="text-gray-700 mb-4">Primary interface for external communication, built as a RESTful API using Spring Boot's web capabilities. It handles request validation, authentication, authorization, and audit logging.</p>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-bold text-gray-900 mb-2">Key Responsibilities:</h4>
-                <ul class="text-sm text-gray-600 space-y-1">
-                  <li>• Request handling with dynamic input parameters</li>
-                  <li>• Thorough request validation using Spring annotations</li>
-                  <li>• Audit logging for compliance and security</li>
-                  <li>• Orchestration initiation and response handling</li>
-                  <li>• Content negotiation support</li>
-                </ul>
-              </div>
-            </div>
-          
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Execution Orchestrator</h3>
-              <p class="text-gray-700 mb-4">Central coordinating component managing the end-to-end report generation workflow. It ensures fault tolerance by persisting the state of each job in the PostgreSQL database.</p>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-bold text-gray-900 mb-2">State Management:</h4>
-                <ul class="text-sm text-gray-600 space-y-1">
-                  <li>• A `report_jobs` table tracks the lifecycle of each report.</li>
-                  <li>• States include `PENDING`, `FETCHING_DATA`, `PROCESSING_DATA`, `GENERATING_DOCUMENT`, `COMPLETED`, `FAILED`.</li>
-                  <li>• The orchestrator polls for pending jobs and transactionally updates the state upon completing each step.</li>
-                  <li>• Implements robust error handling and configurable retry mechanisms for failed steps.</li>
-                </ul>
-              </div>
-            </div>
-          
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Configuration Layer</h3>
-              <p class="text-gray-700 mb-4">Manages all metadata and settings defining how reports are generated, externalizing configurations to enable extensibility without code changes.</p>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-bold text-gray-900 mb-2">Storage Options:</h4>
-                <ul class="text-sm text-gray-600 space-y-1">
-                  <li>• <strong>PostgreSQL:</strong> Relational database for structured configuration</li>
-                  <li>• <strong>Low-code Interface:</strong> GUI-based configuration editor</li>
-                </ul>
-              </div>
-            </div>
-          
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Data Fetching Layer</h3>
-              <p class="text-gray-700 mb-4">Abstracts the retrieval of raw data from diverse sources using pluggable connectors (Strategy pattern or SPI). Its sole responsibility is to connect to external systems and fetch data without applying business logic.</p>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-bold text-gray-900 mb-2">Technologies:</h4>
-                <ul class="text-sm text-gray-600 space-y-1">
-                  <li>• Spring WebClient for reactive HTTP communication</li>
-                  <li>• Apache Camel for integration patterns</li>
-                  <li>• Circuit breaker patterns with Resilience4J</li>
-                </ul>
-              </div>
-            </div>
-          
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Data Processing & Aggregation Layer</h3>
-              <p class="text-gray-700 mb-4">A dedicated layer responsible for aggregating data from multiple sources and applying business logic or complex transformations. It prepares a clean, unified data model (context) for the templating layer.</p>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-bold text-gray-900 mb-2">Key Responsibilities:</h4>
-                <ul class="text-sm text-gray-600 space-y-1">
-                  <li>• Combining data from multiple connectors (e.g., joining customer and order data)</li>
-                  <li>• Executing complex calculations and business rules</li>
-                  <li>• Structuring the final data context for the template</li>
-                </ul>
-              </div>
-            </div>
-          
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Templating Layer</h3>
-              <p class="text-gray-700 mb-4">Consumes the pre-processed data context and merges it with a report template. It uses a generic configuration schema to delegate to the appropriate engine (e.g., R2...) without being coupled to a specific implementation.</p>
-            </div>
-          
-            <div class="component-card">
-              <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Document Generator Layer</h3>
-              <p class="text-gray-700 mb-4">Converts processed templates to output formats (PDF, Excel) using tools or libraries like iText, and Flying Saucer with Strategy pattern implementation.</p>
-            </div>
-          </div>
         </section>
-
 
         <!-- Low-Code Integration -->
         <section id="low-code" class="section-spacing">
@@ -680,17 +548,17 @@ flowchart TB
 
           <div class="highlight-box">
             <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Empowering Business Users</h3>
-            <p class="text-gray-700">The architecture empowers users with limited coding expertise to manage and extend reporting capabilities through intuitive interfaces</p>
+            <p class="text-gray-700">The architecture empowers users with limited coding expertise to manage and extend reporting capabilities through intuitive interfaces and declarative configurations.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!--<div class="component-card">
+            <div class="component-card">
               <div class="flex items-center mb-4">
                 <i class="fas fa-code text-blue-600 text-2xl mr-3"></i>
                 <h3 class="font-canela text-xl font-bold text-gray-900">Declarative Configuration</h3>
               </div>
               <p class="text-gray-600 text-sm">Report definitions using YAML/JSON formats specify inputs, data sources, transformations, templates, and outputs without Java coding.</p>
-            </div> -->
+            </div>
 
             <div class="component-card">
               <div class="flex items-center mb-4">
@@ -700,13 +568,13 @@ flowchart TB
               <p class="text-gray-600 text-sm">Web-based tool with forms and wizards for visual report configuration management, generating underlying configuration files.</p>
             </div>
 
-            <!--<div class="component-card">
+            <div class="component-card">
               <div class="flex items-center mb-4">
                 <i class="fas fa-terminal text-purple-600 text-2xl mr-3"></i>
                 <h3 class="font-canela text-xl font-bold text-gray-900">Scripting Interface</h3>
               </div>
               <p class="text-gray-600 text-sm">Embedded scripting with Groovy, JavaScript, or SpEL for complex logic while maintaining low-code paradigm for advanced scenarios.</p>
-            </div> -->
+            </div>
           </div>
         </section>
 
@@ -721,7 +589,7 @@ flowchart TB
               </div>
               <div>
                 <h3 class="font-bold text-gray-900">Spring Boot (Java 17+)</h3>
-                <p class="text-sm text-gray-600">Core framework providing convention-over-configuration, embedded server support, and comprehensive ecosystem integration</p>
+                <p class="text-sm text-gray-600">Core framework providing convention-over-configuration, embedded server support, and comprehensive ecosystem integration <a href="https://www.geeksforgeeks.org/springboot/spring-boot-architecture/" class="citation-link" target="_blank">[28]</a>.</p>
               </div>
             </div>
 
@@ -736,12 +604,22 @@ flowchart TB
             </div>
 
             <div class="tech-stack-item">
+              <div class="bg-purple-100 p-3 rounded-lg">
+                <i class="fas fa-file-pdf text-purple-600 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">PDF Generation Engines</h3>
+                <p class="text-sm text-gray-600">R2 (primary), iText <a href="https://www.javaboy.org/2024/1009/springboot-itext-pdf.html" class="citation-link" target="_blank">[144]</a>, Flying Saucer with pluggable architecture for flexibility.</p>
+              </div>
+            </div>
+
+            <div class="tech-stack-item">
               <div class="bg-orange-100 p-3 rounded-lg">
                 <i class="fas fa-network-wired text-orange-600 text-2xl"></i>
               </div>
               <div>
                 <h3 class="font-bold text-gray-900">Data Connectors</h3>
-                <p class="text-sm text-gray-600">Spring WebClient for reactive HTTP, Apache Camel for integration patterns.</p>
+                <p class="text-sm text-gray-600">Spring WebClient for reactive HTTP, Apache Camel for integration patterns, GraphQL support where appropriate.</p>
               </div>
             </div>
 
@@ -751,7 +629,7 @@ flowchart TB
               </div>
               <div>
                 <h3 class="font-bold text-gray-900">API Security</h3>
-                <p class="text-sm text-gray-600">OAuth2/JWT for authentication, OpenAPI/Swagger for API documentation.</p>
+                <p class="text-sm text-gray-600">OAuth2/JWT for authentication, OpenAPI/Swagger for API documentation <a href="https://www.cnblogs.com/cg-ww/p/15680051.html" class="citation-link" target="_blank">[32]</a>.</p>
               </div>
             </div>
           </div>
@@ -814,7 +692,7 @@ flowchart TB
 
             <div class="component-card">
               <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Horizontal Scaling (Kubernetes)</h3>
-              <p class="text-gray-700 mb-4">Containerized deployment on Kubernetes for automated scaling, load balancing, and self-healing capabilities to handle 200,000 reports daily.</p>
+              <p class="text-gray-700 mb-4">Containerized deployment on Kubernetes for automated scaling, load balancing, and self-healing capabilities to handle 200,000 reports daily <a href="https://talent500.com/blog/microservices-12-essential-strategies/" class="citation-link" target="_blank">[3]</a>.</p>
               <div class="bg-blue-50 p-4 rounded-lg">
                 <h4 class="font-bold text-blue-900 mb-2">Kubernetes Features:</h4>
                 <ul class="text-sm text-blue-800 space-y-1">
@@ -828,7 +706,7 @@ flowchart TB
 
             <div class="component-card">
               <h3 class="font-canela text-2xl font-bold text-gray-900 mb-4">Asynchronous Processing</h3>
-              <p class="text-gray-700 mb-4">Message queues (Kafka/RabbitMQ) decouple report generation triggers from processing, improving throughput and resource utilization.</p>
+              <p class="text-gray-700 mb-4">Message queues (Kafka/RabbitMQ) decouple report generation triggers from processing, improving throughput and resource utilization <a href="https://dev.to/24mwangi/kafka-event-driven-microservices-1mei" class="citation-link" target="_blank">[179]</a>.</p>
               <div class="bg-green-50 p-4 rounded-lg">
                 <h4 class="font-bold text-green-900 mb-2">Benefits:</h4>
                 <ul class="text-sm text-green-800 space-y-1">
@@ -852,7 +730,7 @@ flowchart TB
                 <i class="fas fa-cogs text-blue-600 text-2xl mr-3"></i>
                 <h3 class="font-canela text-xl font-bold text-gray-900">Configuration-Driven Reports</h3>
               </div>
-              <p class="text-gray-600 text-sm">New reports added through configurations with low code/no code changes, empowering business analysts.</p>
+              <p class="text-gray-600 text-sm">New reports added through YAML/JSON configurations without code changes or redeployment, empowering business analysts.</p>
             </div>
 
             <div class="component-card">
@@ -868,7 +746,7 @@ flowchart TB
                 <i class="fas fa-file-export text-purple-600 text-2xl mr-3"></i>
                 <h3 class="font-canela text-xl font-bold text-gray-900">Pluggable PDF Engines</h3>
               </div>
-              <p class="text-gray-600 text-sm">TemplateEngine SPI allows integration of alternative PDF generation engines beyond R2, avoiding lock-in.</p>
+              <p class="text-gray-600 text-sm">TemplateEngine SPI allows integration of alternative PDF generation engines beyond R2, avoiding vendor lock-in.</p>
             </div>
           </div>
 
@@ -888,7 +766,7 @@ flowchart TB
         </section>
 
         <!-- Use Case Section -->
-        <!--<section id="use-case" class="section-spacing">
+        <section id="use-case" class="section-spacing">
           <h2 class="font-canela text-4xl font-bold text-gray-900 mb-8">Example Use Case: Client Investment Report</h2>
 
           <div class="space-y-6">
@@ -896,12 +774,12 @@ flowchart TB
               <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">1. Input Parameters</h3>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <pre class="text-sm text-gray-700"><code>{
-                  &#34;reportType&#34;: &#34;ClientInvestmentReport&#34;,
-                  &#34;clientId&#34;: &#34;CLIENT12345&#34;,
-                  &#34;startDate&#34;: &#34;2023-01-01&#34;,
-                  &#34;endDate&#34;: &#34;2023-06-30&#34;,
-                  &#34;outputFormat&#34;: &#34;PDF&#34;
-                }</code></pre>
+  &#34;reportType&#34;: &#34;ClientInvestmentReport&#34;,
+  &#34;clientId&#34;: &#34;CLIENT12345&#34;,
+  &#34;startDate&#34;: &#34;2023-01-01&#34;,
+  &#34;endDate&#34;: &#34;2023-06-30&#34;,
+  &#34;outputFormat&#34;: &#34;PDF&#34;
+}</code></pre>
               </div>
             </div>
 
@@ -915,10 +793,10 @@ flowchart TB
               </ul>
               <div class="bg-gray-50 p-4 rounded-lg">
                 <pre class="text-sm text-gray-700"><code>{
-                    &#34;engine&#34;: &#34;R2&#34;,
-                    &#34;reference&#34;: &#34;client-invest-report-v3&#34;,
-                    &#34;version&#34;: &#34;1.2&#34;
-                  }</code></pre>
+  &#34;engine&#34;: &#34;R2&#34;,
+  &#34;reference&#34;: &#34;client-invest-report-v3&#34;,
+  &#34;version&#34;: &#34;1.2&#34;
+}</code></pre>
               </div>
             </div>
 
@@ -943,15 +821,15 @@ flowchart TB
             <div class="component-card">
               <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">5. Template Processing & Output</h3>
               <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
-                <li>The Templating Layer receives the processed data context from the Data Processing & Aggregation layer.</li>
-                <li>It then merges this data with a predefined report template.</li>
-                <li>The resulting document is passed to the Document Generator or to the R2 PDF service.</li>
-                <li>The Document Generator uses a tool/library (like iText, or Flying Saucer...) to convert the document into a final output format, such as a PDF.</li>
-                <li>Finally, this [PDF] document is either streamed directly to the client or stored in an Object Store (S3) for later asynchronous retrieval.</li>
+                <li>Templating Layer inspects the template configuration and routes to the "R2" engine plugin.</li>
+                <li>It sends the processed data context and the template reference ("client-invest-report-v3") to the R2 service.</li>
+                <li>R2 processes the template and generates the PDF document.</li>
+                <li>Document Generator receives the PDF and streams it to the client.</li>
+                <li>Optionally, the PDF is stored in an object store for asynchronous retrieval.</li>
               </ol>
             </div>
           </div>
-        </section> -->
+        </section>
 
         <!-- Validation Criteria -->
         <section id="validation" class="section-spacing">
@@ -960,7 +838,7 @@ flowchart TB
           <div class="space-y-6">
             <div class="component-card">
               <h3 class="font-canela text-xl font-bold text-gray-900 mb-4">Microservice Best Practices Alignment</h3>
-              <p class="text-gray-700">Evaluation of adherence to single responsibility, loose coupling, high cohesion, statelessness, and API-first design principles.</p>
+              <p class="text-gray-700">Evaluation of adherence to single responsibility, loose coupling, high cohesion, statelessness, and API-first design principles <a href="https://medium.com/@masonarmani38/reporting-strategy-in-a-microservice-architechture-4d02cd7ed233" class="citation-link" target="_blank">[192]</a>.</p>
             </div>
 
             <div class="component-card">
@@ -1021,10 +899,10 @@ flowchart TB
                 <h4 class="font-bold text-gray-900 mb-2">Well-Defined Interfaces</h4>
                 <p class="text-gray-600 text-sm">The system will provide clear, well-documented Java interfaces for the `DataConnector` and `TemplateEngine` plugins, establishing a firm contract for implementation.</p>
               </div>
-              <!--<div class="component-card">
+              <div class="component-card">
                 <h4 class="font-bold text-gray-900 mb-2">SDKs and Starter Kits</h4>
                 <p class="text-gray-600 text-sm">To lower the barrier to entry, the project will include template Maven/Gradle projects that developers can use as a starting point for creating new plugins, complete with example code.</p>
-              </div> -->
+              </div>
             </div>
           </div>
         </section>

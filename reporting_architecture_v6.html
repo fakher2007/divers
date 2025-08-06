@@ -1,0 +1,1766 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Reporting Microservice Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.5.0/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --secondary: #334155;
+            --accent: #3b82f6;
+            --accent-gradient: linear-gradient(135deg, #3b82f6, #1e40af);
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            overflow-x: hidden;
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .gradient-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+            min-height: 60vh;
+        }
+        
+        .bento-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(30, 64, 175, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .citation {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px dotted var(--accent);
+        }
+        
+        .citation:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 1px solid var(--accent);
+        }
+        
+        .layer-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .layer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .phase-timeline {
+            position: relative;
+        }
+        
+        .phase-timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-gradient);
+        }
+        
+        .phase-item {
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .phase-item::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 3px solid var(--bg-primary);
+        }
+        
+        /* Mermaid diagram styling */
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .mermaid-control-btn:not(.reset-zoom) {
+                display: none;
+            }
+            .mermaid-controls {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-grid h1 {
+                font-size: 2.25rem;
+                line-height: 2.5rem;
+            }
+            .hero-grid p {
+                font-size: 1rem;
+            }
+            .hero-grid img {
+                height: auto;
+                max-height: 300px;
+            }
+            #executive-summary .grid, 
+            #architecture-principles .grid, 
+            #technical-stack .grid {
+                grid-template-columns: 1fr;
+            }
+            section {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+    </style>
+  </head>
+
+  <body>
+    <!-- Fixed Table of Contents -->
+    <nav class="toc-fixed">
+      <div class="mb-8">
+        <h3 class="font-display text-lg font-semibold text-gray-900 mb-4">Table of Contents</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#executive-summary" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Executive Summary</a>
+          </li>
+          <li>
+            <a href="#architecture-principles" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Architecture Principles</a>
+          </li>
+          <li>
+            <a href="#technical-stack" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Technical Stack</a>
+          </li>
+          <li>
+            <a href="#system-evolution" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">System Evolution</a>
+          </li>
+          <li>
+            <a href="#architecture-components" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Architecture Components</a>
+          </li>
+          <li>
+            <a href="#communication-flow" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Communication Flow</a>
+          </li>
+          <li>
+            <a href="#notification-system" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Notification System</a>
+          </li>
+          <li>
+            <a href="#scheduling-system" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Scheduling System</a>
+          </li>
+          <li>
+            <a href="#benefits" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Benefits</a>
+          </li>
+          <li>
+            <a href="#future-evolutions" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Future Evolutions</a>
+          </li>
+          <li>
+            <a href="#delivery-estimation" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Delivery &amp; Estimation</a>
+          </li>
+          <li>
+            <a href="#diagrams" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Diagrams</a>
+          </li>
+          <li>
+            <a href="#glossary" class="block py-1 text-gray-600 hover:text-blue-600 transition-colors">Glossary</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section class="relative bg-gradient-to-br from-slate-50 to-blue-50 py-16">
+        <div class="max-w-7xl mx-auto px-6">
+          <div class="hero-grid">
+            <div class="space-y-6">
+              <div class="space-y-4">
+                <h1 class="font-display text-5xl font-bold text-gray-900 leading-tight">
+                  <span class="italic text-gray-600">Architecting</span>
+                  <br/>
+                  <span class="gradient-text">Scalable Reporting</span>
+                  <br/>
+                  <span class="text-gray-700">Microservices</span>
+                </h1>
+                <p class="text-xl text-gray-600 max-w-2xl">
+                  A comprehensive architecture blueprint for building resilient, event-driven reporting systems using Hexagonal Architecture and Apache Kafka
+                </p>
+              </div>
+
+              <div class="flex items-center space-x-6 text-sm text-gray-500">
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-users text-blue-600"></i>
+                  <span>100K+ Concurrent Users</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-layer-group text-blue-600"></i>
+                  <span>Hexagonal Architecture</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-bolt text-blue-600"></i>
+                  <span>Apache Kafka</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="bento-card rounded-2xl p-6">
+                <img src="https://kimi-web-img.moonshot.cn/img/files.123freevectors.com/24fe03b85e2bf5c36185ada3cc028bd253d98d8e.jpg" alt="Abstract hexagonal architecture pattern with interconnected nodes" class="w-full h-48 object-cover rounded-lg mb-4" size="medium" aspect="wide" query="hexagonal software architecture abstract" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                <h3 class="font-semibold text-gray-900 mb-2">Core Principles</h3>
+                <p class="text-sm text-gray-600">Clean separation of concerns, framework-agnostic core, and plug-and-play adapters</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Executive Summary -->
+      <section id="executive-summary" class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-6">
+          <div class="mb-12">
+            <h2 class="font-display text-3xl font-bold text-gray-900 mb-6">Executive Summary</h2>
+            <div class="prose prose-lg max-w-none">
+              <p class="text-gray-700 leading-relaxed mb-6">
+                This document outlines a comprehensive software architecture for a Reporting Microservice, designed to be highly scalable, maintainable, and evolvable. The architecture is based on the <strong>Hexagonal Architecture (Ports and Adapters)</strong> pattern, which ensures a clear separation between the core business logic and external systems. <strong>Apache Kafka</strong> serves as the central nervous system for all asynchronous communication, enabling a resilient and scalable event-driven design.
+              </p>
+
+              <div class="grid md:grid-cols-2 gap-8 my-8">
+                <div class="bg-blue-50 rounded-xl p-6">
+                  <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-target text-blue-600 mr-2"></i>
+                    Business Goals
+                  </h3>
+                  <ul class="space-y-2 text-sm text-gray-700">
+                    <li>• Responsive reporting for 100,000+ concurrent users</li>
+                    <li>• Scalable architecture with horizontal scaling</li>
+                    <li>• Flexible scheduling and automation</li>
+                    <li>• Extensible platform for future growth</li>
+                  </ul>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-6">
+                  <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-cogs text-blue-600 mr-2"></i>
+                    Technical Foundation
+                  </h3>
+                  <ul class="space-y-2 text-sm text-gray-700">
+                    <li>• Java 17+ with Spring Boot 3.x</li>
+                    <li>• Apache Kafka for event-driven messaging</li>
+                    <li>• PostgreSQL for structured data storage</li>
+                    <li>• S3 for scalable report file storage</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Architecture Principles -->
+      <section id="architecture-principles" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Architecture Principles</h2>
+
+          <div class="mb-12">
+            <h3 class="font-display text-2xl font-semibold text-gray-900 mb-6">Core Tenet: Hexagonal Architecture</h3>
+            <p class="text-gray-700 mb-8">
+              The design is fundamentally rooted in <a href="https://java-design-patterns.com/patterns/hexagonal-architecture/" class="citation">Hexagonal Architecture</a>, also known as Ports and Adapters. This architectural pattern was chosen to create a robust, maintainable, and scalable system that can evolve with changing business requirements and technological landscapes.
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="layer-card bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center mb-4">
+                  <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-cube text-blue-600"></i>
+                  </div>
+                  <h4 class="font-semibold text-gray-900">Domain Layer</h4>
+                </div>
+                <p class="text-sm text-gray-600">Contains pure business logic and entities, completely independent of any external frameworks or infrastructure concerns.</p>
+              </div>
+
+              <div class="layer-card bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center mb-4">
+                  <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-plug text-green-600"></i>
+                  </div>
+                  <h4 class="font-semibold text-gray-900">Application Layer</h4>
+                </div>
+                <p class="text-sm text-gray-600">Defines use cases and ports (interfaces) that orchestrate business logic and define contracts for external communication.</p>
+              </div>
+
+              <div class="layer-card bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center mb-4">
+                  <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-puzzle-piece text-purple-600"></i>
+                  </div>
+                  <h4 class="font-semibold text-gray-900">Infrastructure Layer</h4>
+                </div>
+                <p class="text-sm text-gray-600">Contains adapters - concrete implementations of ports that handle technical details of external system interactions.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 shadow-sm">
+            <h3 class="font-display text-2xl font-semibold text-gray-900 mb-6">Key Design Principles</h3>
+            <div class="grid md:grid-cols-2 gap-8">
+              <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i class="fas fa-layer-group text-blue-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Clear Separation of Concerns</h4>
+                    <p class="text-sm text-gray-600">Different aspects of the application are isolated from one another, with each component having a single, well-defined responsibility.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i class="fas fa-vial text-green-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Independent Testability</h4>
+                    <p class="text-sm text-gray-600">Each component can be tested in isolation, with the domain layer requiring no external dependencies for unit testing.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i class="fas fa-code text-purple-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Framework-Agnostic Core</h4>
+                    <p class="text-sm text-gray-600">Business logic is written in pure Java without dependencies on specific frameworks like Spring or Kafka.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                  <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i class="fas fa-exchange-alt text-orange-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Plug-and-Play Adapters</h4>
+                    <p class="text-sm text-gray-600">Adapters can be easily swapped or modified without affecting the core business logic.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i class="fas fa-sync-alt text-teal-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Maintainable Structure</h4>
+                    <p class="text-sm text-gray-600">The architecture provides a solid foundation for building a system that can stand the test of time.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i class="fas fa-expand-arrows-alt text-red-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Scalability</h4>
+                    <p class="text-sm text-gray-600">Event-driven design enables horizontal scaling and efficient resource utilization.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Technical Stack -->
+      <section id="technical-stack" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Technical Stack</h2>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fab fa-java text-2xl text-blue-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Language</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">Java 17+</p>
+              <p class="text-xs text-gray-600">Modern features, performance, LTS</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-leaf text-2xl text-green-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Framework</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">Spring Boot 3.x</p>
+              <p class="text-xs text-gray-600">Production-ready microservices</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-stream text-2xl text-purple-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Messaging</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">Apache Kafka</p>
+              <p class="text-xs text-gray-600">Event-driven backbone</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-database text-2xl text-orange-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Storage</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">PostgreSQL + S3</p>
+              <p class="text-xs text-gray-600">Relational + object storage</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-clock text-2xl text-teal-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Scheduling</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">Quartz / Spring</p>
+              <p class="text-xs text-gray-600">Configurable job scheduling</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-memory text-2xl text-red-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Caching</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">Redis (Optional)</p>
+              <p class="text-xs text-gray-600">Performance optimization</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-chart-line text-2xl text-indigo-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Observability</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">Prometheus + Grafana</p>
+              <p class="text-xs text-gray-600">Monitoring &amp; alerting</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-vial text-2xl text-gray-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Testing</h3>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">JUnit 5 + Mockito</p>
+              <p class="text-xs text-gray-600">Unit &amp; integration tests</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Evolution -->
+      <section id="system-evolution" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">System Evolution: A Phased Approach</h2>
+
+          <div class="phase-timeline">
+            <div class="phase-item">
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-display text-xl font-semibold text-gray-900">V0: Make it Work</h3>
+                  <span class="bg-orange-100 text-orange-800 text-xs font-medium px-3 py-1 rounded-full">Monolithic</span>
+                </div>
+                <p class="text-gray-700 mb-4">Deliver a functional, end-to-end report generation feature as quickly as possible using a monolithic architecture with in-memory queue.</p>
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Key Characteristics:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                      <li>• Single, self-contained application</li>
+                      <li>• In-memory queue for async processing</li>
+                      <li>• Embedded business logic</li>
+                      <li>• Quick time-to-market</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Justification:</h4>
+                    <p class="text-sm text-gray-600">Speed and simplicity. Avoid complexity of external systems to rapidly validate report generation algorithms and user experience.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="phase-item">
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-display text-xl font-semibold text-gray-900">V1: Make it Clean</h3>
+                  <span class="bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full">Decoupled</span>
+                </div>
+                <p class="text-gray-700 mb-4">Refactor the monolith into a clean Hexagonal Architecture with clear layer separation and Apache Kafka for messaging.</p>
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Key Improvements:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                      <li>• Hexagonal Architecture layers</li>
+                      <li>• Apache Kafka replaces in-memory queue</li>
+                      <li>• Clear separation of concerns</li>
+                      <li>• Framework-agnostic core</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Benefits:</h4>
+                    <p class="text-sm text-gray-600">Resilient and scalable asynchronous processing pipeline with clear boundaries between components.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="phase-item">
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-display text-xl font-semibold text-gray-900">V2: Make it Fast</h3>
+                  <span class="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full">Scalable</span>
+                </div>
+                <p class="text-gray-700 mb-4">Optimize for performance, resilience, and horizontal scalability with advanced features and production-ready capabilities.</p>
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">New Features:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                      <li>• Retry and Dead Letter Queue (DLQ)</li>
+                      <li>• Redis caching for performance</li>
+                      <li>• Deduplication logic</li>
+                      <li>• Scheduling and notification systems</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Production Ready:</h4>
+                    <p class="text-sm text-gray-600">Resilient, efficient, and scalable system capable of handling production workloads with advanced error handling.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Architecture Components -->
+      <section id="architecture-components" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Architecture Components (Hexagonal)</h2>
+
+          <div class="grid lg:grid-cols-2 gap-12">
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Application Layer: Ports</h3>
+              <div class="space-y-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                  <h4 class="font-medium text-gray-900 mb-2">Inbound Ports (Driven by Adapters)</h4>
+                  <p class="text-sm text-gray-600 mb-3">Entry points to the application that define use cases:</p>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">GenerateReportUseCase</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">ScheduleReportUseCase</code></li>
+                  </ul>
+                </div>
+
+                <div class="bg-green-50 rounded-lg p-4">
+                  <h4 class="font-medium text-gray-900 mb-2">Outbound Ports (Driving Adapters)</h4>
+                  <p class="text-sm text-gray-600 mb-3">Define how application interacts with external systems:</p>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">ReportRepositoryPort</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">KafkaProducerPort</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">NotificationPort</code></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Infrastructure Layer: Adapters</h3>
+              <div class="space-y-4">
+                <div class="bg-purple-50 rounded-lg p-4">
+                  <h4 class="font-medium text-gray-900 mb-2">Inbound Adapters</h4>
+                  <p class="text-sm text-gray-600 mb-3">Handle incoming requests from external world:</p>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">RESTControllerAdapter</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">SchedulerAdapter</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">KafkaConsumerAdapter</code></li>
+                  </ul>
+                </div>
+
+                <div class="bg-orange-50 rounded-lg p-4">
+                  <h4 class="font-medium text-gray-900 mb-2">Outbound Adapters</h4>
+                  <p class="text-sm text-gray-600 mb-3">Implement communication with external systems:</p>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">JpaReportRepositoryAdapter</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">KafkaProducerAdapter</code></li>
+                    <li>• <code class="bg-gray-200 px-2 py-1 rounded text-xs">NotificationAdapter</code></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Communication Flow -->
+      <section id="communication-flow" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Communication Flow</h2>
+
+          <div class="space-y-12">
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">REST-Triggered Report Generation</h3>
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="mermaid-container">
+                  <div class="mermaid-controls">
+                    <button class="mermaid-control-btn zoom-in" title="Zoom in">
+                      <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="mermaid-control-btn zoom-out" title="Zoom out">
+                      <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="mermaid-control-btn reset-zoom" title="Reset">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="mermaid-control-btn fullscreen" title="Fullscreen">
+                      <i class="fas fa-expand"></i>
+                    </button>
+                  </div>
+                  <div class="mermaid">
+                   sequenceDiagram
+                      participant Client
+                      participant RESTControllerAdapter
+                      participant GenerateReportUseCase
+                      participant KafkaProducerAdapter
+                      participant Kafka
+                      participant KafkaConsumerAdapter
+                      participant ReportRepositoryAdapter
+
+                      Client->>RESTControllerAdapter: POST /api/reports (ReportParams)
+                      RESTControllerAdapter->>GenerateReportUseCase: generateReport(ReportParams)
+                      GenerateReportUseCase->>ReportRepositoryAdapter: save(reportRequest)
+                      ReportRepositoryAdapter-->>GenerateReportUseCase: reportId
+                      GenerateReportUseCase->>KafkaProducerAdapter: publish(ReportGenerationRequestedEvent)
+                      KafkaProducerAdapter->>Kafka: Send Event to `report-requests` Topic
+                      Kafka-->>KafkaProducerAdapter: Ack
+                      KafkaProducerAdapter->>GenerateReportUseCase: Success
+                      GenerateReportUseCase-->>RESTControllerAdapter: reportId (202 Accepted)
+                      RESTControllerAdapter-->>Client: 202 Accepted (reportId)
+
+                      Note over Kafka,KafkaConsumerAdapter: Asynchronous Processing
+                      Kafka->>KafkaConsumerAdapter: Deliver Event
+                      KafkaConsumerAdapter->>GenerateReportUseCase: handle(ReportGenerationRequestedEvent)
+                      GenerateReportUseCase->>ReportRepositoryAdapter: updateStatus(reportId, PROCESSING)
+                      GenerateReportUseCase->>ReportGenerator: generateReport()
+                      ReportGenerator-->>GenerateReportUseCase: Report File
+                      GenerateReportUseCase->>ReportRepositoryAdapter: saveReport(reportId, fileUrl)
+                      GenerateReportUseCase->>ReportRepositoryAdapter: updateStatus(reportId, COMPLETED)
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Scheduled Job Execution</h3>
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="mermaid-container">
+                  <div class="mermaid-controls">
+                    <button class="mermaid-control-btn zoom-in" title="放大">
+                      <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="mermaid-control-btn zoom-out" title="缩小">
+                      <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="mermaid-control-btn reset-zoom" title="重置">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                      <i class="fas fa-expand"></i>
+                    </button>
+                  </div>
+                  <div class="mermaid">
+                   sequenceDiagram
+                    participant SchedulerAdapter
+                    participant ScheduleReportUseCase
+                    participant KafkaProducerAdapter
+                    participant Kafka
+                    participant KafkaConsumerAdapter
+                    participant ReportRepositoryAdapter
+
+                    Note over SchedulerAdapter: Cron-based Trigger
+                    SchedulerAdapter->>ScheduleReportUseCase: executeScheduledJob(jobId)
+                    ScheduleReportUseCase->>ReportRepositoryAdapter: getJobConfig(jobId)
+                    ReportRepositoryAdapter-->>ScheduleReportUseCase: JobConfig
+                    ScheduleReportUseCase->>KafkaProducerAdapter: publish(ScheduledReportTriggeredEvent)
+                    KafkaProducerAdapter->>Kafka: Send Event to `scheduled-reports` Topic
+                    Kafka-->>KafkaProducerAdapter: Ack
+                    KafkaProducerAdapter->>ScheduleReportUseCase: Success
+
+                    Note over Kafka,KafkaConsumerAdapter: Asynchronous Processing
+                    Kafka->>KafkaConsumerAdapter: Deliver Event
+                    KafkaConsumerAdapter->>GenerateReportUseCase: handle(ScheduledReportTriggeredEvent)
+                    GenerateReportUseCase->>ReportRepositoryAdapter: updateStatus(jobId, PROCESSING)
+                    GenerateReportUseCase->>ReportGenerator: generateReport()
+                    ReportGenerator-->>GenerateReportUseCase: Report File
+                    GenerateReportUseCase->>ReportRepositoryAdapter: saveReport(jobId, fileUrl)
+                    GenerateReportUseCase->>ReportRepositoryAdapter: updateStatus(jobId, COMPLETED)
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notification System -->
+      <section id="notification-system" class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-8">Notification System</h2>
+
+          <div class="bg-blue-50 rounded-xl p-8">
+            <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Event-Driven Design with Kafka</h3>
+            <p class="text-gray-700 mb-6">
+              The notification system is designed to be a <strong>decoupled, event-driven component</strong> that informs users and other systems about the status of report generation jobs. It leverages Apache Kafka to ensure that notifications are handled asynchronously and reliably.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+              <div>
+                <h4 class="font-medium text-gray-900 mb-4">Core Event: ReportGeneratedEvent</h4>
+                <div class="bg-white rounded-lg p-4">
+                  <pre class="text-sm text-gray-700 overflow-x-auto"><code>{
+  &#34;reportId&#34;: &#34;uuid&#34;,
+  &#34;userId&#34;: &#34;user123&#34;,
+  &#34;status&#34;: &#34;COMPLETED&#34;,
+  &#34;fileUrl&#34;: &#34;s3://bucket/report.pdf&#34;,
+  &#34;timestamp&#34;: 1234567890
+}</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="font-medium text-gray-900 mb-4">Decoupled Subscribers</h4>
+                <ul class="space-y-2 text-sm text-gray-700">
+                  <li class="flex items-center">
+                    <i class="fas fa-envelope text-blue-600 mr-2"></i>
+                    <span><strong>EmailNotificationAdapter</strong> - Sends email notifications</span>
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fas fa-bell text-blue-600 mr-2"></i>
+                    <span><strong>InAppNotificationAdapter</strong> - Updates in-app notifications</span>
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fas fa-clipboard-check text-blue-600 mr-2"></i>
+                    <span><strong>AuditLoggerAdapter</strong> - Logs to audit trail</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scheduling System -->
+      <section id="scheduling-system" class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-8">Scheduling System</h2>
+
+          <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-cog text-2xl text-blue-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Configuration-Driven</h3>
+              </div>
+              <p class="text-sm text-gray-600 mb-4">Scheduling logic is driven by a configuration store in the database table <code class="bg-gray-100 px-2 py-1 rounded text-xs">report_jobs</code>.</p>
+              <ul class="text-xs text-gray-600 space-y-1">
+                <li>• jobId</li>
+                <li>• reportTemplateId</li>
+                <li>• cronExpression</li>
+                <li>• parameters</li>
+                <li>• isActive</li>
+              </ul>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-shield-alt text-2xl text-green-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Isolation</h3>
+              </div>
+              <p class="text-sm text-gray-600">Scheduling logic is completely isolated within the <code class="bg-gray-100 px-2 py-1 rounded text-xs">SchedulerAdapter</code> with no knowledge of core business logic.</p>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-plug text-2xl text-purple-600 mr-3"></i>
+                <h3 class="font-semibold text-gray-900">Integration</h3>
+              </div>
+              <p class="text-sm text-gray-600">Integrates seamlessly through event-driven architecture by publishing <code class="bg-gray-100 px-2 py-1 rounded text-xs">ScheduledReportTriggeredEvent</code> to Kafka.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Benefits -->
+      <section id="benefits" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Benefits of the Architecture</h2>
+
+          <div class="grid lg:grid-cols-2 gap-12">
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">For Technical Stakeholders</h3>
+              <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-puzzle-piece text-blue-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Modularity and Reusability</h4>
+                    <p class="text-sm text-gray-600">Clear separation of concerns results in highly modular system with reusable core business logic across different contexts and triggers.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-expand-arrows-alt text-green-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Scalability and Performance</h4>
+                    <p class="text-sm text-gray-600">Apache Kafka enables horizontal scaling of report generation workers through asynchronous, event-driven processing.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-vial text-purple-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Maintainability and Testability</h4>
+                    <p class="text-sm text-gray-600">Framework-agnostic core can be unit tested in isolation without complex Spring context or external dependencies.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">For Business Stakeholders</h3>
+              <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-rocket text-orange-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Faster Time-to-Market</h4>
+                    <p class="text-sm text-gray-600">New features can be added by creating new adapters without touching the stable, well-tested core business logic.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-shield-alt text-red-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Reduced Operational Risk</h4>
+                    <p class="text-sm text-gray-600">Resilient design with Kafka ensures no lost requests and robust error handling through retry and DLQ mechanisms.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-sync-alt text-teal-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 mb-2">Technology Independence</h4>
+                    <p class="text-sm text-gray-600">Framework-agnostic core prevents vendor lock-in and allows adoption of new technologies without complete rewrites.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Future Evolutions -->
+      <section id="future-evolutions" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Future Evolutions</h2>
+
+          <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h3 class="font-display text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
+                Enhanced Reporting
+              </h3>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li>• Report template customization</li>
+                <li>• Report versioning / historical snapshots</li>
+                <li>• Custom output formats (CSV, XLSX, JSON)</li>
+              </ul>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h3 class="font-display text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-cogs text-green-600 mr-3"></i>
+                Platform Capabilities
+              </h3>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li>• Multi-tenancy support</li>
+                <li>• Event sourcing for auditability</li>
+                <li>• OpenSearch/Elasticsearch integration</li>
+              </ul>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h3 class="font-display text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-lock text-purple-600 mr-3"></i>
+                Security &amp; Integration
+              </h3>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li>• Access control per report via roles</li>
+                <li>• Integration with data catalogs</li>
+                <li>• Advanced caching strategies</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Delivery &amp; Estimation -->
+      <section id="delivery-estimation" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Delivery &amp; Time Estimation</h2>
+
+          <div class="mb-12">
+            <div class="overflow-x-auto">
+              <table class="w-full bg-white rounded-xl shadow-sm">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Feature / Module</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Estimated Time</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Notes</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Domain Modeling</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">2–3 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Entities, ports, use cases</td>
+                  </tr>
+                  <tr class="bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">REST Adapter</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">2 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Spring REST Controller</td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Kafka Producer/Consumer</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">3–4 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Topics + serialization</td>
+                  </tr>
+                  <tr class="bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Persistence (JPA + PostgreSQL)</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">2–3 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Setup and adapter</td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Scheduled Job System</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">3–4 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Quartz or Scheduler Adapter</td>
+                  </tr>
+                  <tr class="bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Notification System</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">2–3 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Kafka-based event publishing</td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Testing (unit + integration)</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">3–5 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Domain and adapter layers</td>
+                  </tr>
+                  <tr class="bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">CI/CD pipeline setup</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">1–2 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Docker/K8s optional</td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Observability &amp; Monitoring</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">1–2 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Prometheus, logging</td>
+                  </tr>
+                  <tr class="bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Buffer for refactoring &amp; QA</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">3–5 days</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">Stabilization</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-blue-50 rounded-xl p-6">
+              <h3 class="font-semibold text-gray-900 mb-4">Team Composition</h3>
+              <ul class="space-y-2 text-sm text-gray-700">
+                <li>• <strong>Software Architect (1):</strong> Overall architecture and technical leadership</li>
+                <li>• <strong>Backend Developer (2):</strong> Core logic, adapters, and tests</li>
+                <li>• <strong>QA Engineer (1):</strong> Test cases and quality assurance</li>
+                <li>• <strong>DevOps Engineer (0.5):</strong> CI/CD pipeline and deployment</li>
+              </ul>
+            </div>
+
+            <div class="bg-green-50 rounded-xl p-6">
+              <h3 class="font-semibold text-gray-900 mb-4">Delivery Approach</h3>
+              <p class="text-sm text-gray-700 mb-3">
+                <strong>Incremental delivery</strong> aligned with V0, V1, and V2 phases. Each phase results in a working, deployable version with increasing features and capabilities.
+              </p>
+              <p class="text-sm text-gray-600">
+                This approach allows for early feedback from stakeholders and reduces the risk of a &#34;big bang&#34; delivery.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Diagrams -->
+      <section id="diagrams" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Architecture Diagrams</h2>
+
+          <div class="space-y-12">
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Component Diagram (Hexagonal Architecture)</h3>
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="mermaid-container">
+                  <div class="mermaid-controls">
+                    <button class="mermaid-control-btn zoom-in" title="Zoom in">
+                      <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="mermaid-control-btn zoom-out" title="Zoom out">
+                      <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="mermaid-control-btn reset-zoom" title="Reset">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="mermaid-control-btn fullscreen" title="Fullscreen">
+                      <i class="fas fa-expand"></i>
+                    </button>
+                  </div>
+                  <div class="mermaid">
+                    graph TD
+                    subgraph &#34;Infrastructure Layer (Adapters)&#34;
+                    direction LR
+                    subgraph &#34;Inbound Adapters&#34;
+                    REST[REST Controller Adapter]
+                    Scheduler[Scheduler Adapter]
+                    KafkaConsumer[Kafka Consumer Adapter]
+                    end
+                    subgraph &#34;Outbound Adapters&#34;
+                    JPA[JPA Repository Adapter]
+                    KafkaProducer[Kafka Producer Adapter]
+                    Notification[Notification Adapter]
+                    end
+                    end
+
+                    subgraph &#34;Application Layer (Ports &amp; Use Cases)&#34;
+                    direction LR
+                    subgraph &#34;Inbound Ports&#34;
+                    GenerateReportPort[GenerateReportUseCase]
+                    ScheduleReportPort[ScheduleReportUseCase]
+                    end
+                    subgraph &#34;Outbound Ports&#34;
+                    ReportRepositoryPort[ReportRepositoryPort]
+                    EventPublisherPort[KafkaProducerPort]
+                    NotifierPort[NotificationPort]
+                    end
+                    end
+
+                    subgraph &#34;Domain Layer (Core Logic)&#34;
+                    Report[Report Entity]
+                    Template[ReportTemplate Entity]
+                    Service[Domain Service]
+                    end
+
+                    %% Inbound Flow
+                    REST --&gt;|calls| GenerateReportPort
+                    Scheduler --&gt;|triggers| ScheduleReportPort
+                    KafkaConsumer --&gt;|consumes message| GenerateReportPort
+
+                    %% Application Layer to Domain Layer
+                    GenerateReportPort --&gt;|orchestrates| Service
+                    ScheduleReportPort --&gt;|orchestrates| Service
+                    Service --&gt;|uses| Report
+                    Service --&gt;|uses| Template
+
+                    %% Outbound Flow
+                    Service --&gt;|calls| ReportRepositoryPort
+                    Service --&gt;|calls| EventPublisherPort
+                    Service --&gt;|calls| NotifierPort
+
+                    %% Adapters implement Ports
+                    ReportRepositoryPort -- implemented by --&gt; JPA
+                    EventPublisherPort -- implemented by --&gt; KafkaProducer
+                    NotifierPort -- implemented by --&gt; Notification
+
+                    %% Styling
+                    style Report fill:#f9f,stroke:#333,stroke-width:2px
+                    style Template fill:#f9f,stroke:#333,stroke-width:2px
+                    style Service fill:#f9f,stroke:#333,stroke-width:2px
+                    style GenerateReportPort fill:#ccf,stroke:#333,stroke-width:2px
+                    style ScheduleReportPort fill:#ccf,stroke:#333,stroke-width:2px
+                    style ReportRepositoryPort fill:#ccf,stroke:#333,stroke-width:2px
+                    style EventPublisherPort fill:#ccf,stroke:#333,stroke-width:2px
+                    style NotifierPort fill:#ccf,stroke:#333,stroke-width:2px
+                    style REST fill:#cff,stroke:#333,stroke-width:2px
+                    style Scheduler fill:#cff,stroke:#333,stroke-width:2px
+                    style KafkaConsumer fill:#cff,stroke:#333,stroke-width:2px
+                    style JPA fill:#cff,stroke:#333,stroke-width:2px
+                    style KafkaProducer fill:#cff,stroke:#333,stroke-width:2px
+                    style Notification fill:#cff,stroke:#333,stroke-width:2px
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Domain Model (ER Diagram)</h3>
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="mermaid-container">
+                  <div class="mermaid-controls">
+                    <button class="mermaid-control-btn zoom-in" title="Zoom in">
+                      <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="mermaid-control-btn zoom-out" title="Zoom out">
+                      <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="mermaid-control-btn reset-zoom" title="Reset">
+                      <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="mermaid-control-btn fullscreen" title="Fullscreen">
+                      <i class="fas fa-expand"></i>
+                    </button>
+                  </div>
+                  <div class="mermaid">
+                    erDiagram
+                    REPORT ||--o{ REPORT_PARAMETER : has
+                    REPORT ||--|| REPORT_STATUS : has
+                    REPORT }o--|| REPORT_TEMPLATE : uses
+                    REPORT_TEMPLATE ||--o{ TEMPLATE_PARAMETER : has
+                    SCHEDULED_JOB }o--|| REPORT_TEMPLATE : uses
+
+                    REPORT {
+                    uuid id PK
+                    string user_id
+                    string template_id FK
+                    datetime created_at
+                    datetime updated_at
+                    string file_url
+                    }
+
+                    REPORT_PARAMETER {
+                    uuid report_id FK
+                    string key
+                    string value
+                    }
+
+                    REPORT_STATUS {
+                    uuid report_id PK, FK
+                    enum status &#34;PENDING, PROCESSING, COMPLETED, FAILED&#34;
+                    string error_message
+                    }
+
+                    REPORT_TEMPLATE {
+                    string id PK
+                    string name
+                    string description
+                    string query
+                    }
+
+                    TEMPLATE_PARAMETER {
+                    string template_id FK
+                    string key
+                    string type
+                    }
+
+                    SCHEDULED_JOB {
+                    uuid id PK
+                    string template_id FK
+                    string cron_expression
+                    boolean is_active
+                    json parameters
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Glossary -->
+      <section id="glossary" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-display text-3xl font-bold text-gray-900 mb-12">Glossary &amp; Appendix</h2>
+
+          <div class="grid lg:grid-cols-2 gap-12">
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Kafka Message Contracts</h3>
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h4 class="font-medium text-gray-900 mb-3">ReportGeneratedEvent (Avro Schema)</h4>
+                <pre class="text-sm text-gray-700 overflow-x-auto"><code>{
+  &#34;namespace&#34;: &#34;com.company.reporting.events&#34;,
+  &#34;type&#34;: &#34;record&#34;,
+  &#34;name&#34;: &#34;ReportGeneratedEvent&#34;,
+  &#34;fields&#34;: [
+    {&#34;name&#34;: &#34;reportId&#34;, &#34;type&#34;: &#34;string&#34;},
+    {&#34;name&#34;: &#34;userId&#34;, &#34;type&#34;: &#34;string&#34;},
+    {&#34;name&#34;: &#34;status&#34;, &#34;type&#34;: {&#34;type&#34;: &#34;enum&#34;, 
+        &#34;name&#34;: &#34;ReportStatus&#34;, 
+        &#34;symbols&#34;: [&#34;COMPLETED&#34;, &#34;FAILED&#34;]}},
+    {&#34;name&#34;: &#34;fileUrl&#34;, &#34;type&#34;: [&#34;null&#34;, &#34;string&#34;], &#34;default&#34;: null},
+    {&#34;name&#34;: &#34;errorMessage&#34;, &#34;type&#34;: [&#34;null&#34;, &#34;string&#34;], &#34;default&#34;: null},
+    {&#34;name&#34;: &#34;timestamp&#34;, &#34;type&#34;: {&#34;type&#34;: &#34;long&#34;, 
+        &#34;logicalType&#34;: &#34;timestamp-micros&#34;}}
+  ]
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">API Contract</h3>
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h4 class="font-medium text-gray-900 mb-3">OpenAPI/Swagger Definition</h4>
+                <pre class="text-sm text-gray-700 overflow-x-auto"><code>openapi: 3.0.0
+info:
+  title: Reporting Microservice API
+  version: 1.0.0
+paths:
+  /api/reports:
+    post:
+      summary: Request a new report generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: &#39;#/components/schemas/ReportRequest&#39;
+      responses:
+        &#39;202&#39;:
+          description: Report generation request accepted</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Database Schema</h3>
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h4 class="font-medium text-gray-900 mb-3">PostgreSQL Schema</h4>
+                <pre class="text-sm text-gray-700 overflow-x-auto"><code>CREATE TABLE report_template (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    query TEXT NOT NULL
+);
+
+CREATE TABLE report (
+    id UUID PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    template_id VARCHAR(255) NOT NULL REFERENCES report_template(id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    file_url TEXT
+);</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-semibold text-gray-900 mb-6">Configuration</h3>
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h4 class="font-medium text-gray-900 mb-3">Sample application.yml</h4>
+                <pre class="text-sm text-gray-700 overflow-x-auto"><code>server:
+  port: 8080
+
+spring:
+  application:
+    name: reporting-microservice
+  datasource:
+    url: jdbc:postgresql://localhost:5432/reporting_db
+    username: reporting_user
+    password: reporting_password
+
+reporting:
+  storage:
+    s3:
+      bucket-name: my-reporting-bucket
+  notification:
+    email:
+      from-address: noreply@company.com</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+        // Initialize Mermaid with enhanced configuration
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#64748b',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#ffffff',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8fafc',
+                tertiaryBkg: '#e2e8f0',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            sequence: {
+                useMaxWidth: false,
+                wrap: true,
+                width: 800,
+                height: 600,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35
+            },
+            er: {
+                useMaxWidth: false,
+                diagramPadding: 20
+            },
+            gantt: {
+                useMaxWidth: false
+            }
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // If touch device, ignore mouse events
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // Get the distance between two points
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - Touch event handling
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // Single-finger drag
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // Double-finger zoom
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // Single-finger drag
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // Double-finger zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // Reset state
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // Delay reset isTouch to avoid immediate mouse events
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // Switch from double-finger to single-finger, switch to drag mode
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize mermaid controls after mermaid renders
+        setTimeout(initializeMermaidControls, 1000);
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight active section in TOC
+        const sections = document.querySelectorAll('section[id]');
+        const tocLinks = document.querySelectorAll('.toc-fixed a[href^="#"]');
+
+        function highlightActiveSection() {
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('text-blue-600', 'font-medium');
+                link.classList.add('text-gray-600');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.remove('text-gray-600');
+                    link.classList.add('text-blue-600', 'font-medium');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightActiveSection);
+        highlightActiveSection(); // Initial call
+    </script>
+  
+
+</body></html>

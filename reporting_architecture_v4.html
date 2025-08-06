@@ -391,86 +391,64 @@
               </button>
             </div>
             <div class="mermaid">
-flowchart TB
-    subgraph Clients ["***Clients & External Systems***"]
-        direction TB
-        A["Client Applications"]:::external
-        O["Identity Provider"]:::external
-        R2["R2 PDF Service"]:::external
+flowchart TD
+    %% Core Domain
+    subgraph CoreDomain["🎯 Core Domain (Application & Domain Layer)"]
+        UC[Use Case: Generate Report]:::core
+        PORT_Request[Port: ReportRequestPort]:::port
+        PORT_Data[Port: DataRetrievalPort]:::port
+        PORT_Template[Port: TemplateEnginePort]:::port
+        PORT_PDF[Port: PdfGeneratorPort]:::port
+        PORT_Store[Port: DocumentStoragePort]:::port
+        PORT_Config[Port: ConfigRepositoryPort]:::port
     end
 
-    subgraph Gateway ["***Gateway Layer***"]
-        direction TB
-        B["API Gateway"]:::gateway
+    %% Inbound Adapters
+    subgraph Inbound["⬅️ Inbound Adapters (Driving)"]
+        REST[REST Controller]:::inbound
+        KAFKA_IN[Kafka Listener]:::inbound
+        SCHEDULER[Scheduled Task]:::inbound
     end
 
-    subgraph Pipeline ["***Reporting Microservice Pipeline***"]
-        direction TB
-        P["API Layer"]:::component
-        Q["Execution Orchestrator"]:::component
-        E["Data Connector Layer"]:::component
-        DPAL["Data Processing & Aggregation"]:::component
-        I["Templating Layer"]:::component
-        L["Document Generator"]:::component
+    %% Outbound Adapters
+    subgraph Outbound["➡️ Outbound Adapters (Driven)"]
+        API_ADAPTER[Internal/External API Adapter]:::outbound
+        KAFKA_ADAPTER[Kafka Stream Adapter]:::outbound
+        TEMPLATE_ENGINE[Template Engine Adapter]:::outbound
+        PDF_ENGINE[PDF Generator Adapter]:::outbound
+        S3_ADAPTER[S3 Storage Adapter]:::outbound
+        CONFIG_ADAPTER[PostgreSQL Config Adapter]:::outbound
     end
 
-    subgraph Storage ["***Storage Systems***"]
-        direction TB
-        D["Configuration Store (PostgreSQL)"]:::storage
-        M["Object Store (S3)"]:::storage
-    end
+    %% Flows
+    REST --> PORT_Request
+    KAFKA_IN --> PORT_Request
+    SCHEDULER --> PORT_Request
 
-    subgraph DataSources ["***Data Sources***"]
-        direction TB
-        F["Internal REST APIs"]:::external
-        G["External REST APIs"]:::external
-        H["Kafka Event Streams"]:::external
-    end
+    PORT_Request --> UC
 
-    subgraph Engines ["***PDF Engines***"]
-        direction TB
-        K["Other PDF Engines (iText, FlyingSaucer)"]:::external
-    end
+    UC --> PORT_Config
+    PORT_Config --> CONFIG_ADAPTER
 
-    A eA@-- HTTP Requests --> B
-    O eO@-- Authenticates --> B
-    B eB@-- Routes --> P
-    P eP@--> Q
-    Q eQ@--> E
-    E eE@--> DPAL
-    DPAL eDPAL@--> I
-    I eI@--> L
-    L eL@-- Stores --> M
-    Q eD@-- Manages --> D
+    UC --> PORT_Data
+    PORT_Data --> API_ADAPTER
+    PORT_Data --> KAFKA_ADAPTER
 
-    E eF@-- Fetches --> F
-    E eG@-- Fetches --> G
-    E eH@-- Consumes --> H
+    UC --> PORT_Template
+    PORT_Template --> TEMPLATE_ENGINE
 
-    I eK@-- Uses --> K
-    I eR2@-- Requests --> R2
+    UC --> PORT_PDF
+    PORT_PDF --> PDF_ENGINE
 
-    eA@{ animation: fast }
-    eO@{ animation: fast }
-    eB@{ animation: fast }
-    eP@{ animation: fast }
-    eQ@{ animation: fast }
-    eE@{ animation: fast }
-    eDPAL@{ animation: fast }
-    eI@{ animation: fast }
-    eL@{ animation: fast }
-    eD@{ animation: fast }
-    eF@{ animation: fast }
-    eG@{ animation: fast }
-    eH@{ animation: fast }
-    eK@{ animation: slow }
-    eR2@{ animation: slow }
+    UC --> PORT_Store
+    PORT_Store --> S3_ADAPTER
 
-    classDef external fill:#E6E6FA,stroke:#333,stroke-width:2px,color:#000
-    classDef gateway fill:#D4EDDA,stroke:#333,stroke-width:2px,color:#000
-    classDef microservice fill:#CDECFC,stroke:#333,stroke-width:2px,color:#000
-    classDef storage fill:#FFF3CD,stroke:#333,stroke-width:2px,color:#000
-    classDef component fill:#F8D7DA,stroke:#333,stroke-width:2px,color:#000
+    %% Styling
+    classDef core fill:#fff,stroke:#000,stroke-width:2px
+    classDef port fill:#F0FFF0,stroke:#999,stroke-dasharray: 5 3
+    classDef inbound fill:#D1E7DD,stroke:#0F5132,stroke-width:1.5px
+    classDef outbound fill:#E7D1DD,stroke:#51200F,stroke-width:1.5px
+
 
             </div>
           </div>
