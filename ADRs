@@ -1,0 +1,214 @@
+ADR-1: The system uses a true microservices architecture.
+Context: The system is being built by an internal development team, integrating into an existing infrastructure. A core principle is to establish a shared understanding of the design and structure.
+
+Decision: The system will be built using a microservices architecture. Development teams will be responsible for their own services, and each service will have its own versioning and deployment lifecycle. Services must be loosely coupled, scalable, and resilient. A standard technology stack (e.g., Quarkus for backend, Vaadin for frontend) will be adopted, and legacy systems will be phased out.
+
+Consequences: This architecture promotes modularity and well-defined service responsibilities. It is expected to simplify deployment and improve overall system quality. The document considers and rejects the alternative of a monolithic application.
+
+ADR-2: Services must provide explicit interfaces.
+Context: In a microservices architecture, services must collaborate effectively. Without controlled and explicit interfaces, this collaboration can become unmanageable and lead to a complex, tightly coupled system.
+
+Decision: Services must communicate through explicit and well-documented interfaces, avoiding hidden implementation details. The approved communication methods are REST APIs, notification events, and data streams.
+
+Consequences: This decision makes the system more maintainable, as services can be replaced or updated without affecting others. It simplifies development and improves system robustness by enforcing clear contracts.
+
+ADR-3: Services are built for high availability.
+Context: The system performs business-critical functions, requiring high availability. This means the system must be robust enough to handle failures during financial activities and ensure that long-running tasks do not fail.
+
+Decision: The system is designed to be robust, treating individual services as potentially unavailable. All services must be hardened against production failures, and error scenarios must be explicitly tested. Appropriate error messages and recovery mechanisms are required for all services, especially those communicating with external systems.
+
+Consequences: This ensures the system remains operational even in the face of partial failures. Services will need to be regularly evolved, with a plan to phase out less critical functionalities.
+
+ADR-4: Services can act within the system using their own roles.
+Context: To ensure security, every component and resource that needs protection (data, system resources, service-to-service communication) should have a dedicated privilege.
+
+Decision: Services must identify themselves to their collaboration partners. The system will use signed data for this identification, and it will not rely on the end-user's identity for internal communication between services. When a service acts on behalf of an end-user, it will copy the relevant authorization data from the incoming request.
+
+Consequences: This approach provides fine-grained control over permissions. Any new service role introduced must have its permissions configured and tracked via the administrative interface.
+
+ADR-5: Requests within the system are authenticated.
+Context: The system needs to prevent malicious components and man-in-the-middle attacks on the local network. Requests must be authenticated to ensure they haven't been tampered with or replayed.
+
+Decision: Transport Layer Security (TLS) with server certificates will be used for network communication. REST requests will be authenticated using Signed JSON Web Tokens (JWS), transmitted in the Authorization: Bearer HTTP header.
+
+Consequences: This ensures secure service-to-service communication. Alternatives like HTTP signatures (higher implementation effort) and simple bearer tokens (lacking non-repudiation) were considered and rejected.
+
+ADR-8: Public Java APIs are explicitly identified.
+Context: While most functionality is exposed via REST, some Java libraries are intended for direct use. It is necessary to clearly distinguish public APIs from internal implementation code.
+
+Decision: Public APIs and classes must be part of dedicated packages ending with *.api. These APIs are required to be well-documented, backward-compatible, and use standard dependency injection (e.g., JSR-330).
+
+Consequences: This standard prevents the unintended use of internal code and simplifies API management. Any changes to public APIs are treated as breaking changes, which must be carefully managed.
+
+ADR-9: REST resources follow some naming and formatting guidelines.
+Context: A consistent and predictable API design is crucial for usability and maintenance. This ADR establishes guidelines for REST resource and field naming.
+
+Decision: REST resources must be named using plural nouns (e.g., customers). Fields should use camelCase. Query parameters for pagination must be standardized (e.g., pageSize, page). Date and time values must conform to ISO 8601, and embedded data in fields must have a prefix to avoid conflicts.
+
+ADR-10: Tagging of log messages.
+Context: Log analysis is a key part of monitoring. To improve the efficiency of log filtering and analysis, logs need additional context.
+
+Decision: Log messages will be a machine-readable JSON object with a tag attribute. This tag will categorize the log message and provide context. The ADR defines a list of standard tags such as DATA_PROVISIONING_RELATED and CONFIG_RELATED.
+
+Consequences: This standardized tagging simplifies automated log filtering and helps in quickly identifying the source of issues, reducing the burden on operators.
+
+ADR-11: REST API Paging.
+Context: REST APIs often need to return large datasets, and paging is required for efficient handling.
+
+Decision: Paging should only be applied when explicitly requested by a client. The recommended method is cursor-based paging, which is more performant for large datasets. Offset-based paging is a simpler alternative but can have performance issues.
+
+Consequences: All new APIs must use these guidelines, and existing APIs should be migrated over time.
+
+ADR-12: REST Resources Provide i18n Human Readable Content.
+Context: The platform serves a global user base, so content must be internationalized (i18n).
+
+Decision: REST resources must provide human-readable content based on the Accept-Language header. The server is responsible for this evaluation, and all responses should default to English if no language is specified.
+
+Consequences: This centralizes translation logic in the backend, simplifying client-side development.
+
+ADR-13: Kubernetes is the foundation for containerized product deployments.
+Context: The platform needs a robust and standardized foundation for deployment in both public and private cloud environments, especially given regulatory constraints.
+
+Decision: The product will be deployed using Kubernetes objects. All components will be provided as OCI images, and the system is designed to be cloud-provider agnostic. The core functionality must not depend on the Kubernetes API.
+
+Consequences: This decision standardizes the deployment process and modernizes the orchestration of the platform's components.
+
+ADR-15: BLX provide a standard implementation for their use cases, but are extendable where solutions might require it.
+Context: The platform must be flexible to support diverse use cases while maintaining a standardized core.
+
+Decision: The platform offers a core set of standard implementations that are extendable via a dedicated framework for Java and plugins. Customizations must be built on this standard codebase to ensure maintainability.
+
+Consequences: This approach allows for a balance between standardization and flexibility, avoiding costly custom maintenance while meeting specific client needs.
+
+ADR-16: Plugins provide a common core behavior for a unified look & feel throughout the landscape.
+Context: With multiple development teams, there is a risk of inconsistency in the user experience and codebase.
+
+Decision: Plugins must provide a common set of core functionality and adhere to shared design rules. They act as an interface to the main BLX module, ensuring a unified look and feel.
+
+Consequences: This standard increases developer productivity and ensures a consistent, high-quality user experience across the entire platform.
+
+ADR-17: Services log relevant information in appropriate levels.
+Context: Effective logging is crucial for debugging, monitoring, and problem diagnosis. Logs must be informative but also maintain security and privacy.
+
+Decision: A standardized logging approach with defined levels (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, AUDIT) is adopted. Each level has a specific purpose, from detailed debugging to reporting fatal errors and compliance-related data.
+
+Consequences: This allows for more effective filtering of logs and ensures that developers and operators can quickly find the information they need to diagnose issues.
+
+ADR-18: The REST response codes follow common guidelines.
+Context: API consumers should be able to consistently and predictably understand the status of their requests based on the HTTP response code.
+
+Decision: All REST APIs must adhere to the industry standard defined in RFC 2616. The document provides specific examples of correct status codes for different situations (e.g., 200 for success, 404 for not found, 403 for forbidden).
+
+Consequences: This standard provides a common ground for API consumers and simplifies integration with the platform.
+
+ADR-20: BLX use init containers to activate extensions in cloud deployments.
+Context: The platform needs a robust and automated way to activate extensions based on deployment configuration.
+
+Decision: Kubernetes init containers will be used to load extensions at the start of a deployment. Extensions are released as separate OCI images, and their activation is determined by configuration rather than being hardcoded.
+
+Consequences: This standard simplifies the deployment of customized solutions and ensures extensions are activated consistently across different environments.
+
+ADR-22: Information hiding has high priority to strengthen the microservices’ autonomy.
+Context: The core principle of a microservices architecture is service autonomy. Implementation details should be concealed to prevent tight coupling and a "monolithic" landscape.
+
+Decision: All implementation details must be hidden behind service boundaries. The document identifies past violations (e.g., direct database access) and mandates adherence to this principle in all new development.
+
+Consequences: This will lead to a more resilient and maintainable system in the long run, even if initial development takes slightly longer.
+
+ADR-25: Services use Apache Kafka for asynchronous communication.
+Context: While REST is used for synchronous communication, some scenarios require high throughput and fault tolerance, which are better suited for an asynchronous approach.
+
+Decision: Apache Kafka is the exclusive technology for asynchronous communication. It is used for tasks like synchronizing data, importing data, and avoiding back pressure on external systems.
+
+Consequences: This choice provides scalability, fault tolerance, and reduces coupling between services.
+
+ADR-26: All asynchronous messages are versioned via Avro Schemata.
+Context: Asynchronous messages often have multiple consumers, so a standardized way of defining and versioning messages is needed to prevent breaking changes.
+
+Decision: All Kafka topics and records will be defined by Avro Schemata, and a schema registry will be used to enforce compatibility. Topic names and message structures will follow a standardized pattern.
+
+Consequences: Avro provides more efficient messaging than formats like JSON and ensures that services can handle schema evolution without breaking.
+
+ADR-27: Import topics are defined equally.
+Context: A new import mechanism is needed to handle data from external sources consistently.
+
+Decision: All import topics on Kafka will follow a consistent Avro schema. The topic names will use the pattern <env>.<svc>.<entity>.import, providing a uniform way to handle import and delete messages.
+
+Consequences: This improves data consistency and simplifies the import logic across the platform.
+
+ADR-28: The product can be operated in OpenShift.
+Context: The platform needs to support Red Hat OpenShift as a deployment target.
+
+Decision: All components must be compatible with OpenShift and other supported platforms. OCI images must be platform-agnostic and adhere to OpenShift-specific rules, such as not binding containers to privileged ports.
+
+Consequences: This ensures the product is deployable in a wider range of environments and promotes robust security practices.
+
+ADR-29: Importing is based on messaging.
+Context: A new, messaging-based mechanism is required to connect to external banking and data sources, supporting formats like consistent CSV files.
+
+Decision: Each service that offers importing will have dedicated Kafka topics for this purpose. The architecture includes an Import Management service that can convert files (e.g., CSV) into Kafka messages.
+
+Consequences: This standardizes the import process, ensuring a consistent data flow and separation of concerns.
+
+ADR-30: Kubernetes artifacts are packaged using Helm.
+Context: The deployment of complex solutions with multiple components needs a standardized and manageable tool.
+
+Decision: Each microservice will have a Helm chart that contains its installation and configuration specifications. Helm will be used to manage all Kubernetes artifacts.
+
+Consequences: This replaces ad-hoc deployment processes with a standardized, robust, and maintainable Helm solution.
+
+ADR-31: Helm umbrella charts are used to bundle aixigo solutions.
+Context: To simplify deployment for clients, multiple components of a solution should be bundled into a single deliverable.
+
+Decision: Solutions will be released as Helm umbrella charts that bundle all relevant microservices. These charts are cloud-provider agnostic and do not include infrastructure components like Kafka or databases.
+
+Consequences: This streamlines the deployment process for complex solutions and simplifies dependency management.
+
+ADR-32: A standardized structure for Helm charts is used.
+Context: To improve usability and reduce the learning curve, Helm charts must follow a standardized structure.
+
+Decision: Helm charts will follow a specific directory structure, including templates, values.yaml, and a README.md. The values.yaml file must be validated using a JSON schema.
+
+Consequences: This ensures a consistent experience for consumers and makes it easier for teams to work with and maintain the charts.
+
+ADR-33: Helm charts track major versions and are released only upon changes to the chart or new major version.
+Context: A clear versioning and release strategy for Helm charts is needed.
+
+Decision: Helm charts are released only when there are changes to the chart itself or when the underlying application has a new major version. A chart has its own version distinct from the application's version.
+
+Consequences: This prevents unnecessary releases for minor application changes and clearly signals breaking changes to consumers.
+
+ADR-34: Helm charts have no dependencies to other Helm charts.
+Context: Dependencies between Helm charts can lead to complex dependency convergence issues.
+
+Decision: The platform's Helm charts will not define dependencies on other Helm charts. Instead, dependencies between core modules and plugins are managed at the solution level using umbrella charts.
+
+Consequences: Dependencies must be explicitly documented in the chart's description and README file, providing clarity and avoiding potential conflicts.
+
+ADR-35: Services provide shallow import messages structures.
+Context: Integrating with import topics can be challenging. To simplify this, the integration layer should be as thin as possible.
+
+Decision: Import topics will have a shallow structure, avoiding complex, nested data. This simplifies the implementation and reduces the risk of complex dependencies and referential consistency issues.
+
+Consequences: This approach makes it easier for external parties to integrate data into the platform and improves overall maintainability.
+
+ADR-36: Importing provides feedback via Kafka and Import Management.
+Context: Asynchronous import processes require a feedback mechanism to report issues.
+
+Decision: The Import Management service will provide feedback on import status or errors via a separate Kafka feedback topic. Feedback is only sent when something goes wrong, not for successful imports. The original message headers are preserved to correlate feedback with the original message.
+
+Consequences: This empowers the import management service to track broken records and follow up on issues.
+
+ADR-37: Services are able to deal with missing references.
+Context: In an asynchronous system, messages can arrive out of order, leading to missing references. A robust mechanism is needed to handle these situations.
+
+Decision: Services must be able to handle missing references. If a missing reference arrives late (after a timeout), it is reported as an error. If it arrives within a timeframe, a "healing" feedback message is sent. The system must use timestamps to manage these scenarios.
+
+Consequences: This requires services to be aware of potential race conditions and to use staging tables to hold data until referenced information arrives.
+
+ADR-38: Service-to-service communication is pre-configured in Kubernetes environments.
+Context: To simplify configuration and avoid hardcoding, service-to-service communication should be pre-configured in Kubernetes environments.
+
+Decision: Services will use pre-filled environment variables (e.g., SERVICE_NAME_SERVICE_HOST and SERVICE_NAME_SERVICE_PORT) to configure remote ports. Service hostnames should match their service IDs, and external certificates are not required.
+
+Consequences: This approach eliminates the need for manual configuration of service communication within Kubernetes, ensuring consistency and ease of deployment.
