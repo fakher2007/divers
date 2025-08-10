@@ -1,0 +1,119 @@
+---
+config:
+  theme: default
+  layout: fixed
+---
+flowchart TB
+ subgraph AppLayer["Application Layer"]
+        UseCase_Generate["Generate Report Use Case"]
+        UseCase_Status["Check Report Status Use Case"]
+  end
+ subgraph DomainLogic["Domain Logic"]
+        ReportConsumer["Report Consumer Pipeline"]
+  end
+ subgraph Ports["Ports"]
+        InPort_ReportRequest["ReportRequestPort"]
+        InPort_Status["ReportStatusPort"]
+        OutPort_Kafka["EventPublisherPort"]
+        OutPort_PDFGen["PDFGenerationPort"]
+        OutPort_Storage["FileStoragePort"]
+        OutPort_Notify["NotificationPort"]
+        OutPort_DataFetch["DataProviderPort"]
+        OutPort_DB["ReportRepositoryPort"]
+  end
+ subgraph Core["Core Domain"]
+        AppLayer
+        DomainLogic
+        Ports
+  end
+ subgraph Inbound["Inbound Adapters (Driving Ports)"]
+        POST["REST: POST /reports"]
+        GET["REST: GET /reports/id"]
+        Scheduler["Scheduled Job Runner"]
+        KafkaListener["Kafka Listener (Report Requested)"]
+  end
+ subgraph Messaging["Messaging"]
+        Kafka["Kafka (Event Broker)"]
+  end
+ subgraph PDFGen["PDF Generation"]
+        R2API["R2 API (Export Views)"]
+  end
+ subgraph FileStorage["File Storage"]
+        S3["S3 (PDF Storage)"]
+  end
+ subgraph Notifications["Notification Channels"]
+        Email["Email"]
+        NotifyService["Notification Service"]
+  end
+ subgraph DataAccess["Data Providers"]
+        ES["ElasticSearch"]
+        AW["AW API"]
+        Bloxx["Bloxx"]
+  end
+ subgraph Persistence["Persistence"]
+        JobsConfigDB["Jobs Config DB"]
+        RedisCache["Redis Cache"]
+        ReportDB["Report DB"]
+  end
+ subgraph Outbound["Outbound Adapters (Driven Ports)"]
+        Messaging
+        PDFGen
+        FileStorage
+        Notifications
+        DataAccess
+        Persistence
+  end
+    POST -- Report creation request --> InPort_ReportRequest
+    GET -- Report status query --> InPort_Status
+    Scheduler -- Trigger scheduled report generation --> InPort_ReportRequest
+    KafkaListener -- Consume report requested event --> InPort_ReportRequest
+    InPort_ReportRequest -- Invoke generate report use case --> UseCase_Generate
+    InPort_Status -- Invoke check report status use case --> UseCase_Status
+    UseCase_Generate -- Start report processing pipeline --> ReportConsumer
+    ReportConsumer -- Fetch data for report --> OutPort_DataFetch
+    ReportConsumer -- Request PDF generation --> OutPort_PDFGen
+    ReportConsumer -- Store generated PDF --> OutPort_Storage
+    ReportConsumer -- Send notifications --> OutPort_Notify
+    ReportConsumer -- Save report metadata --> OutPort_DB
+    UseCase_Generate -- Publish report generated event --> OutPort_Kafka
+    OutPort_Kafka -- Publish event to message broker --> Kafka
+    OutPort_PDFGen -- Request view export for PDF --> R2API
+    OutPort_Storage -- Upload PDF file --> S3
+    OutPort_Notify -- Send notifications via service --> NotifyService
+    NotifyService -- Send email notification --> Email
+    OutPort_DataFetch -- Query search index --> ES
+    OutPort_DataFetch -- Call AW API --> AW
+    OutPort_DataFetch -- Call Bloxx service --> Bloxx
+    OutPort_DB -- Persist report data --> ReportDB
+    UseCase_Generate -- Read job config --> JobsConfigDB
+    UseCase_Generate -- Use cache for processing --> RedisCache
+     UseCase_Generate:::core
+     UseCase_Status:::core
+     ReportConsumer:::core
+     InPort_ReportRequest:::port
+     InPort_Status:::port
+     OutPort_Kafka:::port
+     OutPort_PDFGen:::port
+     OutPort_Storage:::port
+     OutPort_Notify:::port
+     OutPort_DataFetch:::port
+     OutPort_DB:::port
+     POST:::inbound
+     GET:::inbound
+     Scheduler:::inbound
+     KafkaListener:::inbound
+     Kafka:::infra
+     R2API:::infra
+     S3:::infra
+     Email:::infra
+     NotifyService:::infra
+     ES:::infra
+     AW:::infra
+     Bloxx:::infra
+     JobsConfigDB:::infra
+     RedisCache:::infra
+     ReportDB:::infra
+    classDef core fill:#FFF2CC,stroke:#D6B656,stroke-width:2px
+    classDef port fill:#F8CECC,stroke:#B85450,stroke-width:1.5px
+    classDef inbound fill:#DAE8FC,stroke:#6C8EBF,stroke-width:2px
+    classDef infra fill:#E1D5E7,stroke:#9673A6,stroke-width:2px
