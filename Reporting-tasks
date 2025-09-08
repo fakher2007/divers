@@ -1,0 +1,85 @@
+🧩 Internal Components (from your architecture)
+
+1. API Layer (entrypoint) – REST endpoints exposed to clients
+
+
+2. Security (Keycloak integration) – JWT, roles, authorization
+
+
+3. Execution Orchestrator – central workflow engine that coordinates all steps
+
+
+4. Data Connector Layer – connectors/adapters for external providers
+
+
+5. Data Processing & Aggregation – transforms, enrichments, joins, calculations
+
+
+6. Templating Layer – builds the R2 JSON model (instead of PDFs)
+
+
+7. Document Handler – sends R2 JSON to partner, receives PDF buffer, manages saving/retrieval
+
+
+8. Shared Repository Adapter – stores PDFs in network repo
+
+
+9. Observability (cross-cutting) – logging, metrics, tracing
+
+
+
+
+---
+
+📊 Epics → Components Mapping (Reporting Consumer)
+
+Epic	Reporting Consumer Component	Developer Responsibilities
+
+Authentication & Authorization	API Layer, Security	- Integrate with Keycloak<br>- Protect /reports/generate and /reports/{id}/download endpoints<br>- Role-based access control
+Data Fetching	Data Connector Layer	- Implement provider connectors (REST/DB)<br>- Fetch raw data<br>- Handle timeouts/errors
+Data Processing & Aggregation	Data Processing & Aggregation	- Normalize provider data<br>- Perform aggregations/joins<br>- Convert to domain model
+R2 Model Creation	Templating Layer	- Map domain model → R2 JSON model<br>- Validate JSON format<br>- Version model for evolution
+PDF Generation via R2 Partner	Document Handler	- Send R2 JSON to R2 partner API<br>- Receive PDF buffer (byte[])<br>- Handle partner errors/retries
+Storage (Shared Repository)	Document Handler, Shared Repository Adapter	- Save PDF buffer with unique ID<br>- Implement retrieval & streaming<br>- Manage folder hierarchy
+Orchestration	Execution Orchestrator	- Implement synchronous flow:<br>Fetch → Process → Template → DocumentHandler → Store<br>- Return download link
+Observability	Execution Orchestrator, All Layers (cross-cutting)	- Add logging at each step<br>- Trace correlation IDs per report<br>- Metrics (time per step, errors, success rate)
+
+
+
+---
+
+🚀 Development Roadmap Inside Reporting Consumer
+
+Phase 1 (Fast Delivery – MVP)
+
+API Layer: /reports/generate secured
+
+Execution Orchestrator: basic linear workflow
+
+Data Connector Layer: 1 provider only
+
+Data Processing: minimal transformation (map only)
+
+Templating Layer: generate minimal R2 JSON
+
+Document Handler: call R2 partner, save PDF to repo
+
+Return download link
+
+
+👉 At this point, business can request and download first reports.
+
+Phase 2 (Enhancements)
+
+Data Connector Layer: add multiple providers, strategy pattern
+
+Data Processing: caching, advanced aggregations
+
+Templating Layer: schema validation, reusable mapping templates
+
+Document Handler: retries, async processing, metadata persistence
+
+Observability: Prometheus metrics, Grafana dashboards, ELK logs
+
+Orchestrator: move from sync → async with Kafka
+
