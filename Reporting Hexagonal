@@ -1,0 +1,38 @@
+reporting-consumer/
+ ├── src/main/java/com/example/reportingconsumer
+ │    ├── application/             
+ │    │     ├── ReportOrchestrator.java          <-- Execution Orchestrator
+ │    │     ├── ReportService.java               <-- Entry point use case
+ │    │     └── dto/
+ │    │           └── ReportRequest.java
+ │    │
+ │    ├── domain/
+ │    │     ├── model/
+ │    │     │     ├── ReportConfig.java
+ │    │     │     └── ReportResult.java
+ │    │     └── service/
+ │    │           └── ReportAggregator.java      <-- Data Processing & Aggregation
+ │    │
+ │    ├── infrastructure/
+ │    │     ├── api/
+ │    │     │     └── ReportController.java      <-- API Layer
+ │    │     ├── datasource/
+ │    │     │     ├── RestDataConnector.java     <-- Connector to REST APIs
+ │    │     │     └── KafkaDataConnector.java    <-- Connector to Kafka
+ │    │     ├── cache/
+ │    │     │     └── RedisCacheAdapter.java     <-- Cache Layer
+ │    │     ├── persistence/
+ │    │     │     ├── ReportConfigEntity.java
+ │    │     │     ├── ReportConfigRepositoryJpa.java
+ │    │     │     └── PostgresConfigAdapter.java <-- Postgres adapter
+ │    │     ├── templating/
+ │    │     │     └── ThymeleafTemplateAdapter.java  <-- Templating Layer
+ │    │     ├── document/
+ │    │     │     └── PdfDocumentHandler.java    <-- Document Handler
+ │    │     └── external/
+ │    │           └── R2PdfServiceAdapter.java   <-- External PDF microservice
+ │    │
+ │    └── ReportingConsumerApplication.java
+ │
+ └── src/main/resources/
+      └── db/changelog/db.changelog-master.xml   <-- Liquibase migrations
