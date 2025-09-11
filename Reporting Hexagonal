@@ -1,4 +1,33 @@
 reporting-consumer/
+ ├── application/
+ │    ├── ports/
+ │    │    ├── in/
+ │    │    │    └── ReportUseCase.java          <-- inbound port
+ │    │    └── out/
+ │    │         ├── DataConnectorPort.java
+ │    │         ├── CachePort.java
+ │    │         ├── TemplatingPort.java
+ │    │         ├── DocumentHandlerPort.java
+ │    │         ├── ReportConfigRepositoryPort.java
+ │    │         └── ObjectStorePort.java
+ │    ├── ReportService.java   <-- implements ReportUseCase
+ │    └── ReportOrchestrator.java
+ │
+ ├── domain/
+ │    ├── model/ReportConfig.java
+ │    └── service/ReportAggregator.java
+ │
+ ├── infrastructure/
+ │    ├── api/ReportController.java   <-- adapter for ReportUseCase
+ │    ├── datasource/RestDataConnector.java <-- implements DataConnectorPort
+ │    ├── cache/RedisCacheAdapter.java <-- implements CachePort
+ │    ├── templating/ThymeleafTemplateAdapter.java <-- implements TemplatingPort
+ │    ├── document/PdfDocumentHandler.java <-- implements DocumentHandlerPort
+ │    ├── persistence/PostgresConfigAdapter.java <-- implements ReportConfigRepositoryPort
+ │    └── storage/ObjectStoreAdapter.java <-- implements ObjectStorePort
+
+---v1
+reporting-consumer/
  ├── src/main/java/com/example/reportingconsumer
  │    ├── application/             
  │    │     ├── ReportOrchestrator.java          <-- Execution Orchestrator
@@ -36,3 +65,5 @@ reporting-consumer/
  │
  └── src/main/resources/
       └── db/changelog/db.changelog-master.xml   <-- Liquibase migrations
+
+
