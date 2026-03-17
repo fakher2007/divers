@@ -1,1 +1,5 @@
 https://gitlab.com/aixigoAG/team_spr/commerzbank-wealth-management-batch-report/-/merge_requests/10
+
+There is an issue with mapping the meta-part here, because the dates (begin, end, when) may not be the intended ones. That needs to be done outside of consuming a shared pipeline.
+And there is another thing, this chapter should only be created if the corresponding input-topic has a message for this exact contract, which is also not considered at the moment.
+The difficult part is, that we don't have any pipeline anymore, so this is kind of more complicated than usually. We need to consume kafka messages directly here.
